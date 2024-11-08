@@ -194,3 +194,112 @@ function checkout() {
             alert('An error occurred during checkout.');
         });
 }
+
+// Selectors for login and signup buttons
+const loginButton = document.getElementById('loginBtn');
+const signupButton = document.getElementById('signupBtn');
+
+// Selectors for modals
+const loginModal = document.getElementById('loginModal');
+const signupModal = document.getElementById('signupModal');
+
+// Selectors for modal close buttons
+const closeLogin = document.getElementById('closeLogin');
+const closeSignup = document.getElementById('closeSignup');
+
+// Event listeners for login and signup buttons to open modals
+loginButton.addEventListener('click', () => {
+    loginModal.style.display = 'block';  // Show login modal
+});
+
+signupButton.addEventListener('click', () => {
+    signupModal.style.display = 'block';  // Show signup modal
+});
+
+// Event listeners for closing modals (clicking on the "X" button)
+closeLogin.addEventListener('click', () => {
+    loginModal.style.display = 'none';  // Close login modal
+});
+
+closeSignup.addEventListener('click', () => {
+    signupModal.style.display = 'none';  // Close signup modal
+});
+
+// Close modal when clicking outside of the modal content
+window.addEventListener('click', (event) => {
+    if (event.target === loginModal) {
+        loginModal.style.display = 'none';  // Close login modal if outside of content
+    } else if (event.target === signupModal) {
+        signupModal.style.display = 'none';  // Close signup modal if outside of content
+    }
+});
+
+// Handle login form submission
+document.getElementById('loginForm').addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
+
+    fetch(`${apiUrl}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+    })
+        .then(response => {
+            if (!response.ok) throw new Error('Login failed');
+            return response.json();
+        })
+        .then(data => {
+            alert('Login successful!');
+            loginModal.style.display = 'none';
+            // Save token or update UI with login state
+        })
+        .catch(error => {
+            console.error('Error logging in:', error);
+            alert('Login failed. Please check your credentials.');
+        });
+});
+
+// Handle signup form submission
+document.getElementById('signupForm').addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    const username = document.getElementById('signupUsername').value.trim();
+    const password = document.getElementById('signupPassword').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const firstName = document.getElementById('signupFirstName').value.trim();
+    const lastName = document.getElementById('signupLastName').value.trim();
+
+    if (!username || !password || !email || !firstName || !lastName) {
+        alert("All fields are required.");
+        return;
+    }
+
+    fetch(`${apiUrl}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, email, firstName, lastName })
+    })
+        .then(response => {
+            if (!response.ok) {
+                if (response.headers.get('Content-Type')?.includes('application/json')) {
+                    return response.json().then(error => {
+                        throw new Error(error.message || 'Signup failed');
+                    });
+                } else {
+                    throw new Error('Signup failed: Non-JSON response from server');
+                }
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert('Signup successful! You can now log in.');
+            signupModal.style.display = 'none';
+        })
+        .catch(error => {
+            console.error('Error signing up:', error);
+            alert(`Signup failed: ${error.message}`);
+        });
+});
+

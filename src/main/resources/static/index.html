@@ -22,11 +22,45 @@
     <button id="searchBtn">Search</button>
   </div>
   <button id="viewCartBtn">View Cart (<span id="cartCount">0</span>)</button>
+  <!-- Authentication Buttons -->
+  <div class="auth-buttons">
+    <button id="loginBtn">Login</button>
+    <button id="signupBtn">Sign Up</button>
+  </div>
 </header>
 
 <main id="content">
 
 </main>
+
+<!-- Login Modal -->
+<div id="loginModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="closeLogin">&times;</span>
+    <h2>Login</h2>
+    <form id="loginForm">
+      <input type="text" id="loginUsername" placeholder="Username" required>
+      <input type="password" id="loginPassword" placeholder="Password" required>
+      <button type="submit">Login</button>
+    </form>
+  </div>
+</div>
+
+<!-- Signup Modal -->
+<div id="signupModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="closeSignup">&times;</span>
+    <h2>Sign Up</h2>
+    <form id="signupForm">
+      <input type="text" id="signupUsername" placeholder="Username" required>
+      <input type="password" id="signupPassword" placeholder="Password" required>
+      <input type="email" id="signupEmail" placeholder="Email" required>
+      <input type="text" id="signupFirstName" placeholder="First name" required>
+      <input type="text" id="signupLastName" placeholder="Last name" required>
+      <button type="submit">Sign Up</button>
+    </form>
+  </div>
+</div>
 
 <script src="script.js"></script>
 </body>

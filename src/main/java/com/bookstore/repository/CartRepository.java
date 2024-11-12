@@ -5,6 +5,4 @@ import org.springframework.stereotype.Repository;
 import com.bookstore.model.Cart;
 
 @Repository
-public interface CartRepository extends JpaRepository<Cart, Long>{
-    
-}
+public interface CartRepository extends JpaRepository<Cart, Long>{}

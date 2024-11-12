@@ -11,7 +11,7 @@ public class BookTest {
 
     @Before
     public void setUp() {
-        book = new Book(1, "Test ISBN", "Test Title", "Test Description", "Test Author",
+        book = new Book("Test ISBN", "Test Title", "Test Description", "Test Author",
                 "Test Publisher", "http://example.com/picture.jpg",
                 29.99, 10);
     }

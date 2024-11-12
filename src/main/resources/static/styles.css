@@ -1,47 +1,145 @@
-body {
-    font-family: Arial, sans-serif;
+/* ===============================
+   CSS Variables
+   =============================== */
+:root {
+    --ruler: 16px;
+    --white: #feeeee;
+    --color-bg: #272727;
+    --color-shadow: #141414;
+    --color-light: #383838;
+    --color-text: #ffffff;
+}
+
+/* ===============================
+   Base Styles
+   =============================== */
+body, html {
+    background-color: var(--color-bg);
+    font-family: 'Montserrat', sans-serif;
     margin: 0;
     padding: 0;
+    color: var(--color-text);
 }
 
+h1 {
+    color: var(--white);
+    cursor: pointer;
+}
+
+input, select, textarea {
+    font-family: 'Montserrat', sans-serif;
+    font-size: var(--ruler);
+}
+
+input::placeholder {
+    color: var(--white);
+}
+
+/* ===============================
+   Header & Navigation
+   =============================== */
 header {
-    background-color: #333;
-    color: #fff;
-    padding: 10px;
+    background-color: var(--color-bg);
+    padding: 20px;
+    box-shadow: 6px 6px 12px var(--color-shadow), -6px -6px 12px var(--color-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-header h1 {
-    display: inline-block;
-    margin: 0;
-}
-
+/* Search Container */
 #searchContainer {
-    display: inline-block;
-    margin-left: 20px;
+    display: flex;
+    align-items: center;
 }
 
 #searchContainer select,
-#searchContainer input,
-#searchContainer button {
-    margin-left: 5px;
-    padding: 5px;
+#searchContainer input {
+    margin-left: 10px;
+    padding: 10px;
+    border: none;
+    border-radius: 12px;
+    background-color: var(--color-bg);
+    color: var(--white);
+    box-shadow: inset 2px 2px 5px var(--color-shadow), inset -5px -5px 10px var(--color-light);
+    outline: none;
+    transition: all 0.2s ease-in-out;
 }
 
+#searchContainer input::placeholder {
+    color: var(--white);
+}
+
+/* Customer Actions */
+#customerActions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* ===============================
+   Main Content
+   =============================== */
 #content {
     padding: 20px;
 }
 
+/* Book Display */
 .book {
-    border-bottom: 1px solid #ccc;
-    padding: 10px 0;
+    background-color: var(--color-bg);
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    box-shadow: 6px 6px 12px var(--color-shadow), -6px -6px 12px var(--color-light);
 }
 
 .book h2 {
     margin: 0;
+    color: var(--white);
 }
 
 .book p {
-    margin: 5px 0;
+    margin: 10px 0;
+    color: var(--white);
+}
+
+/* ===============================
+   Forms & Inputs
+   =============================== */
+form label {
+    display: block;
+    margin-bottom: 15px;
+    color: var(--white);
+}
+
+form input, form textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ===============================
+   Buttons
+   =============================== */
+button {
+    background-color: var(--color-bg);
+    border: none;
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-size: 16px;
+    color: var(--white);
+    cursor: pointer;
+    outline: none;
+    transition: box-shadow 0.2s ease-in-out;
+    box-shadow: -5px -5px 20px var(--color-light), 5px 5px 20px var(--color-shadow);
+    margin: 5px;
+}
+
+button:hover {
+    box-shadow: -2px -2px 5px var(--color-light), 2px 2px 5px var(--color-shadow);
+}
+
+button:active {
+    box-shadow: inset 1px 1px 2px var(--color-shadow), inset -1px -1px 2px var(--color-light);
 }
 
 button.addToCartBtn {
@@ -134,4 +232,79 @@ button.addToCartBtn {
 
 .modal-content form button:hover {
     background-color: #555;
+}
+
+button#roleSwitchBtn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+}
+
+/* ===============================
+   Purchase History
+   =============================== */
+.purchase-record {
+    background-color: var(--color-bg);
+    margin-bottom: 20px;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 6px 6px 12px var(--color-shadow), -6px -6px 12px var(--color-light);
+}
+
+.purchase-header {
+    background-color: var(--color-bg);
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: inset 2px 2px 5px var(--color-shadow), inset -5px -5px 10px var(--color-light);
+}
+
+.purchase-header h3 {
+    margin: 0;
+    color: var(--white);
+}
+
+.purchase-items {
+    display: grid;
+    gap: 15px;
+    padding: 10px;
+}
+
+.purchase-item {
+    background-color: var(--color-bg);
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: inset 2px 2px 5px var(--color-shadow), inset -5px -5px 10px var(--color-light);
+}
+
+.purchase-item p {
+    margin: 8px 0;
+    color: var(--white);
+}
+
+hr {
+    margin: 20px 0;
+    border: none;
+    border-top: 1px solid var(--color-light);
+    opacity: 0.3;
+}
+
+/* ===============================
+   Media Queries
+   =============================== */
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    #searchContainer {
+        margin-top: 10px;
+    }
+
+    #customerActions {
+        margin-top: 10px;
+        width: 100%;
+        justify-content: space-between;
+    }
 }

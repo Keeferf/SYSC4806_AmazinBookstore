@@ -2,30 +2,39 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bookstore SPA</title>
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <header>
-  <h1>Bookstore</h1>
+  <h1 id="homeBtn" style="cursor: pointer;">Bookstore</h1>
   <div id="searchContainer">
-    <label for="searchType"></label><select id="searchType">
+    <label for="searchType"></label>
+    <select id="searchType">
       <option value="title">Title</option>
       <option value="author">Author</option>
       <option value="publisher">Publisher</option>
       <option value="price">Price Range</option>
       <option value="inventory">Inventory</option>
     </select>
-    <label for="searchInput"></label><input type="text" id="searchInput" placeholder="Enter search keyword...">
-    <label for="minValue"></label><input type="number" id="minValue" placeholder="Min value" style="display: none;">
-    <label for="maxValue"></label><input type="number" id="maxValue" placeholder="Max value" style="display: none;">
+    <label for="searchInput"></label>
+    <input type="text" id="searchInput" placeholder="Enter Keyword">
+    <label for="minValue"></label>
+    <input type="number" id="minValue" placeholder="Min value" style="display: none;">
+    <label for="maxValue"></label>
+    <input type="number" id="maxValue" placeholder="Max value" style="display: none;">
     <button id="searchBtn">Search</button>
   </div>
-  <button id="viewCartBtn">View Cart (<span id="cartCount">0</span>)</button>
   <!-- Authentication Buttons -->
   <div class="auth-buttons">
     <button id="loginBtn">Login</button>
     <button id="signupBtn">Sign Up</button>
+  </div>
+  <div id="customerActions">
+    <button id="viewCartBtn">View Cart (<span id="cartCount">0</span>)</button>
+    <button id="viewHistoryBtn">Purchase History</button>
   </div>
 </header>
 
@@ -61,6 +70,8 @@
     </form>
   </div>
 </div>
+
+<button id="roleSwitchBtn">Switch to Admin View</button>
 
 <script src="script.js"></script>
 </body>

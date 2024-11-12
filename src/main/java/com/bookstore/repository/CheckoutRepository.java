@@ -5,6 +5,4 @@ import org.springframework.stereotype.Repository;
 import com.bookstore.model.Checkout;
 
 @Repository
-public interface CheckoutRepository extends JpaRepository<Checkout, Long>{
-    
-}
+public interface CheckoutRepository extends JpaRepository<Checkout, Long>{}

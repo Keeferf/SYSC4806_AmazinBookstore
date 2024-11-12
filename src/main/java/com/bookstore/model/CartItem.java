@@ -20,7 +20,6 @@ public class CartItem {
     @ManyToOne
     private Cart cart;
 
-    
     /**
      * Default constructor for CartItem
      */

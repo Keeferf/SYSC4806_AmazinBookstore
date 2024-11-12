@@ -4,7 +4,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 
 @Entity
 public class Book {
@@ -12,6 +11,7 @@ public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id; // Primary key
+
 
     private String isbn;
 
@@ -37,9 +37,8 @@ public class Book {
      * @param price - the price of the book
      * @param inventory - the number of copies available in stock
      */
-    public Book(int id, String isbn, String title, String description, String author,
+    public Book(String isbn, String title, String description, String author,
                 String publisher, String pictureURL, Double price, Integer inventory) {
-        this.id = id;
         this.isbn = isbn;
         this.title = title;
         this.description = description;
@@ -187,10 +186,18 @@ public class Book {
         this.inventory = inventory;
     }
 
+    /**
+     * Gets the ID of this book.
+     * @return the ID of this book
+     */
     public int getId() {
         return id;
     }
 
+    /**
+     * Sets the ID of this book.
+     * @param id the new ID for this book
+     */
     public void setId(int id) {
         this.id = id;
     }

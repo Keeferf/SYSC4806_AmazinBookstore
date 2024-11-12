@@ -147,47 +147,55 @@ button.addToCartBtn {
 }
 
 /* Authentication Buttons */
-.auth-buttons {
-    display: inline-block;
-}
-
 .auth-buttons button {
-    background-color: #555;
-    color: white;
-    padding: 8px 15px;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    padding: 10px 20px;
     border: none;
-    border-radius: 5px;
-    margin-left: 10px;
-    cursor: pointer;
+    border-radius: 12px;
     font-size: 14px;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease-in-out;
+    box-shadow: -4px -4px 10px var(--color-light), 4px 4px 10px var(--color-shadow);
+    margin-left: 10px;
 }
 
 .auth-buttons button:hover {
-    background-color: #777;
+    box-shadow: -2px -2px 5px var(--color-light), 2px 2px 5px var(--color-shadow);
 }
 
-/* Modal Styles */
+.auth-buttons button:active {
+    box-shadow: inset 1px 1px 2px var(--color-shadow), inset -1px -1px 2px var(--color-light);
+}
+
+/* Modal Background */
 .modal {
-    display: none; /* Hidden by default */
+    display: none;
     position: fixed;
-    z-index: 100; /* Displayed above everything else */
+    z-index: 100;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgba(0, 0, 0, 0.4); /* Black background with opacity */
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6); /* Darker overlay */
 }
 
+/* Modal Content */
 .modal-content {
-    background-color: #fefefe;
+    background-color: var(--color-bg);
     margin: 10% auto;
     padding: 20px;
-    border: 1px solid #888;
-    width: 300px; /* Set width for modal */
-    border-radius: 10px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    width: 300px;
+    border-radius: 12px;
+    box-shadow: 6px 6px 12px var(--color-shadow), -6px -6px 12px var(--color-light);
+    color: var(--color-text);
     text-align: center;
+}
+
+/* Placeholder Text Color for Modal Inputs */
+.modal-content form input::placeholder {
+    color: var(--color-bg); /* Set the placeholder text color to white */
 }
 
 /* Close Button */
@@ -207,7 +215,7 @@ button.addToCartBtn {
 
 .modal-content h2 {
     margin-top: 0;
-    color: #333;
+    color: var(--color-text);
 }
 
 .modal-content form input {

@@ -519,6 +519,8 @@ const signupModal = document.getElementById('signupModal');
 const closeLogin = document.getElementById('closeLogin');
 const closeSignup = document.getElementById('closeSignup');
 
+const jwt_token = 'jwt_token'
+
 // Event listeners for login and signup buttons to open modals
 loginButton.addEventListener('click', () => {
     loginModal.style.display = 'block';  // Show login modal
@@ -563,9 +565,12 @@ document.getElementById('loginForm').addEventListener('submit', (event) => {
             return response.json();
         })
         .then(data => {
-            alert('Login successful!');
-            loginModal.style.display = 'none';
-            // Save token or update UI with login state
+            if(data.token) {
+                localStorage.setItem(jwt_token, data.token)
+                alert('Login successful!');
+                loginModal.style.display = 'none';
+                updateLoginStatus();
+            }
         })
         .catch(error => {
             console.error('Error logging in:', error);
@@ -614,4 +619,65 @@ document.getElementById('signupForm').addEventListener('submit', (event) => {
             alert(`Signup failed: ${error.message}`);
         });
 });
+
+function getAuthToken() {
+    const token = localStorage.getItem('jwt_token');
+    if (!token) {
+        console.log('No token found'); // Debug log
+        return null;
+    }
+    return token;
+}
+
+function getCurrentUser() {
+    const token = getAuthToken();
+    if (!token) return null;
+
+    try {
+        // JWT tokens are split into three parts by dots
+        const payload = token.split('.')[1];
+        // Decode the base64 payload
+        const decoded = JSON.parse(atob(payload));
+        console.log("Decoded token payload:", decoded); // Debugging log
+        return decoded;
+    } catch (error) {
+        console.error('Error decoding token:', error);
+        return null;
+    }
+}
+// Add function to check user role
+function hasRole(role) {
+    const user = getCurrentUser();
+    return user && user.role === role;
+}
+
+// Selectors for status display
+const statusMessage = document.getElementById('statusMessage');
+const logoutBtn = document.getElementById('logoutBtn');
+
+// Function to check login status
+function updateLoginStatus() {
+    const token = getAuthToken();
+
+    if (token) {
+        const user = getCurrentUser(); // Decode the token to get user details
+        if (user && user.sub) {
+            statusMessage.textContent = `Logged in as ${user.sub}`; // Display username
+            logoutBtn.style.display = 'inline-block'; // Show logout button
+        } else {
+            statusMessage.textContent = 'You are not logged in.';
+            logoutBtn.style.display = 'none';
+        }
+    } else {
+        statusMessage.textContent = 'You are not logged in.';
+        logoutBtn.style.display = 'none';
+    }
+}
+// Function to handle logout
+logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem(jwt_token); // Remove token from localStorage
+    alert('You have been logged out.');
+    updateLoginStatus(); // Update the UI
+});
+
 

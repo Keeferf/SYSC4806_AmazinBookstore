@@ -17,6 +17,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+import static org.aspectj.weaver.tools.cache.SimpleCacheFactory.path;
+
 
 /**
  * JWTRequestFilter is a filter that intercepts incoming HTTP requests to validate JWT tokens.

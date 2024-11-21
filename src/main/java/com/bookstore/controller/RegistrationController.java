@@ -13,12 +13,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 public class RegistrationController {
 
     @Autowired
     private UserService userService;
+
 
     /**
      * Constructs a new RegistrationController with the specified UserService.
@@ -46,10 +50,10 @@ public class RegistrationController {
      *         or a ResponseEntity with status UNAUTHORIZED if authentication fails
      */
     @PostMapping("/login")
-    public ResponseEntity<String> LoginUser(@Valid @RequestBody LoginBody loginBody) {
-        String jwt = userService.verify(loginBody);
-        if(jwt != null) {
-            return ResponseEntity.ok().body("{\"message\": \"Registration successful\"}");
+    public ResponseEntity LoginUser(@Valid @RequestBody LoginBody loginBody) {
+        String token = userService.verify(loginBody);
+        if(token != null) {
+            return ResponseEntity.ok(Collections.singletonMap("token", token));
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\": \"Authorization failed\"}");
     }

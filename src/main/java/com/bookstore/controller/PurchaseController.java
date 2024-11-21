@@ -1,10 +1,12 @@
 package com.bookstore.controller;
 
 import com.bookstore.dto.CartItemDTO;
+import com.bookstore.dto.PurchaseDTO;
 import com.bookstore.model.*;
 import com.bookstore.repository.BookRepository;
 import com.bookstore.repository.CheckoutRepository;
 import com.bookstore.repository.UserRepository;
+import org.hibernate.annotations.Check;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -52,9 +54,7 @@ public class PurchaseController {
         System.out.println("Username: " + username);
 
         User user = userRepository.findByUsernameIgnoreCase(username).orElse(null);
-        System.out.println("User found: " + user.getUsername());
-        System.out.println("Role: " + user.getRole());
-        System.out.println("Cart items: " + cartItems.size());
+
         if (user == null || user.getRole() != Role.CUSTOMER) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not found or invalid role.");
         }
@@ -99,6 +99,26 @@ public class PurchaseController {
         purchaseRepository.save(purchase);
 
         return ResponseEntity.ok("Checkout successful.");
+    }
+
+    @GetMapping("/history")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<PurchaseDTO>> getPurchaseHistory(Principal principal) {
+        String username = principal.getName();
+        User user = userRepository.findByUsernameIgnoreCase(username).orElse(null);
+        List<Checkout> checkouts = purchaseRepository.findByUser(user);
+        // Map the purchase entities to DTOs
+        List<PurchaseDTO> purchaseHistory = checkouts.stream()
+                .map(purchase -> new PurchaseDTO(
+                        purchase.getId(),
+                        purchase.getPurchaseDate(),
+                        purchase.getItems().stream()
+                                .map(item -> new CartItemDTO(item.getBookId(), item.getQuantity()))
+                                .toList()
+                ))
+                .toList();
+
+        return ResponseEntity.ok(purchaseHistory);
     }
 
     /**

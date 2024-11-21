@@ -1,8 +1,11 @@
 package com.bookstore;
 
+import com.bookstore.model.RegistrationBody;
 import com.bookstore.model.Role;
 import com.bookstore.model.User;
 import com.bookstore.repository.UserRepository;
+import com.bookstore.service.JWTService;
+import com.bookstore.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +13,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootApplication
 public class BookStoreApplication {
@@ -18,6 +23,9 @@ public class BookStoreApplication {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserService userService;
 
     public static void main(String[] args) {
         SpringApplication.run(BookStoreApplication.class, args);
@@ -35,14 +43,16 @@ public class BookStoreApplication {
                 log.info("Initializing default users...");
 
                 // Create customer user
-                User customer = new User("customer", Role.CUSTOMER);
-                userRepository.save(customer);
-                log.info("Created customer user with ID: {}", customer.getId());
+                RegistrationBody customer = new RegistrationBody("customer", "pass", "customer@email.com",
+                        "CustomerFirstName", "lastName");
+                userService.register(customer, Role.CUSTOMER);
+                log.info("Created customer user with ID: {}", customer.getUsername());
 
                 // Create admin user
-                User admin = new User("admin", Role.ADMIN);
-                userRepository.save(admin);
-                log.info("Created admin user with ID: {}", admin.getId());
+                RegistrationBody admin = new RegistrationBody("admin", "admin123", "admin@email.com",
+                        "AdminFirst", "AdminLast");
+                userService.register(admin, Role.ADMIN);
+                log.info("Created admin user with Username: {}", admin.getUsername());
 
                 log.info("User initialization completed");
             } else {

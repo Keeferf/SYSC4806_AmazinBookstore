@@ -50,56 +50,91 @@ function updateRoleView() {
 function viewPurchaseHistory() {
     const content = document.getElementById('content');
     content.innerHTML = '<h2>Purchase History</h2>';
+    const token = getAuthToken();
+    if(!token) {
+        alert("You must log in to view your purchase history");
+        return;
+    }
 
-    fetch(`${apiUrl}/users/${currentUserId}`)
-        .then(response => response.json())
-        .then(user => {
-            if (!user.purchases || user.purchases.length === 0) {
-                content.innerHTML += '<p>No purchase history found.</p>';
-                return;
-            }
+    fetch(`${apiUrl}/purchase/history`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
 
-            // Sort purchases by date in descending order (most recent first)
-            const sortedPurchases = user.purchases.sort((a, b) =>
-                new Date(b.purchaseDate) - new Date(a.purchaseDate)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Failed to fetch purchase history. Status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(purchases => {
+        if (!purchases || purchases.length === 0) {
+            content.innerHTML += '<p>No purchase history found.</p>';
+            return;
+        }
+        // Sort purchases by date in descending order (most recent first)
+        const sortedPurchases = purchases.sort((a, b) =>
+            new Date(b.purchaseDate) - new Date(a.purchaseDate)
+        );
+
+        const purchasePromises = sortedPurchases.map(purchase => {
+            const purchaseDate = new Date(purchase.purchaseDate).toLocaleString();
+
+            const itemPromises = purchase.items.map(item =>
+                fetch(`${apiUrl}/books/${item.bookId}`)
+                    .then(response => response.json())
+                    .then(book => ({
+                        ...book,
+                        quantity: item.quantity
+                    }))
             );
 
-            sortedPurchases.forEach(purchase => {
+            return Promise.all(itemPromises).then(items => ({
+                purchaseDate,
+                items
+            }));
+        });
+
+        return Promise.all(purchasePromises);
+    })
+        .then(purchasesWithDetails => {
+            purchasesWithDetails.forEach(purchase => {
                 const purchaseDiv = document.createElement('div');
                 purchaseDiv.className = 'purchase-record';
-
-                // Format the date
-                const purchaseDate = new Date(purchase.purchaseDate).toLocaleString();
 
                 let totalItems = 0;
                 let totalCost = 0;
 
-                // Calculate totals and build items list
+                // Build items list and calculate totals
                 const itemsList = purchase.items.map(item => {
                     totalItems += item.quantity;
-                    const itemTotal = item.purchasePrice * item.quantity;
+                    const itemTotal = item.price * item.quantity;
                     totalCost += itemTotal;
+
                     return `
-                        <div class="purchase-item">
-                            <p><strong>${item.title}</strong> by ${item.author}</p>
-                            <p>Quantity: ${item.quantity}</p>
-                            <p>Price: $${item.purchasePrice.toFixed(2)}</p>
-                            <p>Total: $${itemTotal.toFixed(2)}</p>
-                        </div>
-                    `;
+                    <div class="purchase-item">
+                        <p><strong>${item.title}</strong> by ${item.author || 'Unknown Author'}</p>
+                        <p>Quantity: ${item.quantity}</p>
+                        <p>Price: $${item.price.toFixed(2)}</p>
+                        <p>Total: $${itemTotal.toFixed(2)}</p>
+                    </div>
+                `;
                 }).join('');
 
                 purchaseDiv.innerHTML = `
-                    <div class="purchase-header">
-                        <h3>Purchase Date: ${purchaseDate}</h3>
-                        <p><strong>Total Items:</strong> ${totalItems}</p>
-                        <p><strong>Total Cost:</strong> $${totalCost.toFixed(2)}</p>
-                    </div>
-                    <div class="purchase-items">
-                        ${itemsList}
-                    </div>
-                    <hr>
-                `;
+                <div class="purchase-header">
+                    <h3>Purchase Date: ${purchase.purchaseDate}</h3>
+                    <p><strong>Total Items:</strong> ${totalItems}</p>
+                    <p><strong>Total Cost:</strong> $${totalCost.toFixed(2)}</p>
+                </div>
+                <div class="purchase-items">
+                    ${itemsList}
+                </div>
+                <hr>
+            `;
 
                 content.appendChild(purchaseDiv);
             });

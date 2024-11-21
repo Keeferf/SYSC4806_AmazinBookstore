@@ -27,10 +27,10 @@ public class UserService {
 
     private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
-    public void register(RegistrationBody body) {
+    public void register(RegistrationBody body, Role role) {
         User user = new User();
         user.setUsername(body.getUsername());
-        user.setRole(Role.CUSTOMER);
+        user.setRole(role);
         user.setFirstName(body.getFirstName());
         user.setLastName(body.getLastName());
         user.setPassword(encoder.encode(body.getPassword()));

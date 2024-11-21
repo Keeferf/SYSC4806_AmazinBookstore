@@ -22,6 +22,14 @@ public class RegistrationBody {
     @NotNull
     private String lastName;
 
+    public RegistrationBody(String username, String password, String email, String firstName, String lastName) {
+        this.username = username;
+        this.password = password;
+        this.email = email;
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
+
     public String getUsername() {
         return username;
     }

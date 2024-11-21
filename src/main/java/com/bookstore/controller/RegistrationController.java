@@ -3,6 +3,7 @@ package com.bookstore.controller;
 import com.bookstore.exception.UserExistsException;
 import com.bookstore.model.LoginBody;
 import com.bookstore.model.RegistrationBody;
+import com.bookstore.model.Role;
 import com.bookstore.model.User;
 import com.bookstore.repository.UserRepository;
 import com.bookstore.service.UserService;
@@ -40,7 +41,7 @@ public class RegistrationController {
      */
     @PostMapping("/register")
     public ResponseEntity<String> RegisterUser(@Valid @RequestBody RegistrationBody registrationBody) {
-        userService.register(registrationBody);
+        userService.register(registrationBody, Role.CUSTOMER);
         return ResponseEntity.ok().body("{\"message\": \"Registration successful\"}");
     }
     /**
@@ -50,7 +51,7 @@ public class RegistrationController {
      *         or a ResponseEntity with status UNAUTHORIZED if authentication fails
      */
     @PostMapping("/login")
-    public ResponseEntity LoginUser(@Valid @RequestBody LoginBody loginBody) {
+    public ResponseEntity<?> LoginUser(@Valid @RequestBody LoginBody loginBody) {
         String token = userService.verify(loginBody);
         if(token != null) {
             return ResponseEntity.ok(Collections.singletonMap("token", token));

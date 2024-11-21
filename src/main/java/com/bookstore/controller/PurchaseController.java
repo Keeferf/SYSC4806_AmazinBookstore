@@ -8,10 +8,13 @@ import com.bookstore.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.transaction.Transactional;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,14 +40,21 @@ public class PurchaseController {
      * Handles the checkout process.
      * Deducts purchased quantities from inventory and creates purchase records.
      *
-     * @param userId    The ID of the user making the purchase.
+     * @param principal The authentication principal.
      * @param cartItems The list of items in the cart.
      * @return ResponseEntity with status and message.
      */
     @PostMapping("/checkout")
     @Transactional
-    public ResponseEntity<String> checkout(@RequestParam Long userId, @RequestBody List<CartItemDTO> cartItems) {
-        User user = userRepository.findById(userId).orElse(null);
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<String> checkout(@RequestBody List<CartItemDTO> cartItems , Principal principal) {
+        String username = principal.getName();
+        System.out.println("Username: " + username);
+
+        User user = userRepository.findByUsernameIgnoreCase(username).orElse(null);
+        System.out.println("User found: " + user.getUsername());
+        System.out.println("Role: " + user.getRole());
+        System.out.println("Cart items: " + cartItems.size());
         if (user == null || user.getRole() != Role.CUSTOMER) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not found or invalid role.");
         }

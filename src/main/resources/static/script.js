@@ -480,13 +480,19 @@ function checkout() {
                 }
             });
     });
+    const token = getAuthToken();
+    if (!token) {
+        alert('You must log in to proceed with the checkout.');
+        return;
+    }
 
     Promise.all(validationPromises)
         .then(() => {
-            return fetch(`${apiUrl}/purchase/checkout?userId=${currentUserId}`, {
+            return fetch(`${apiUrl}/purchase/checkout`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(cart)
             });

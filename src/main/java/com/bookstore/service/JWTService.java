@@ -1,5 +1,6 @@
 package com.bookstore.service;
 
+import com.bookstore.model.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -43,6 +44,8 @@ public class JWTService {
 
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
+
+        claims.put("role", Role.CUSTOMER); //temp
         return Jwts.builder()
                 .claims()
                 .add(claims)

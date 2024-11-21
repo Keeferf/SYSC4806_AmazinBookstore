@@ -11,12 +11,24 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+/**
+ * Service class that implements Spring Security's UserDetailsService
+ * to load user-specific data for authentication.
+ */
 @Service
 public class MyUserDetailsService implements UserDetailsService {
 
     @Autowired
     private UserRepository userRepo;
 
+    /**
+     * Loads a user's details by their username for authentication purposes.
+     * Throws an exception if the user is not found.
+     *
+     * @param username the username identifying the user whose data is required
+     * @return UserDetails object containing the user's security information
+     * @throws UsernameNotFoundException if no user is found with the given username
+     */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<User> user = userRepo.findByUsernameIgnoreCase(username);

@@ -1,11 +1,9 @@
 package com.bookstore.controller;
 
-import com.bookstore.exception.UserExistsException;
-import com.bookstore.model.LoginBody;
-import com.bookstore.model.RegistrationBody;
+import com.bookstore.dto.LoginDTO;
+import com.bookstore.dto.RegistrationDTO;
 import com.bookstore.model.Role;
 import com.bookstore.model.User;
-import com.bookstore.repository.UserRepository;
 import com.bookstore.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +13,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -40,7 +37,7 @@ public class RegistrationController {
      *         or status 409 (Conflict) if a user with the provided username or email already exists
      */
     @PostMapping("/register")
-    public ResponseEntity<String> RegisterUser(@Valid @RequestBody RegistrationBody registrationBody) {
+    public ResponseEntity<String> RegisterUser(@Valid @RequestBody RegistrationDTO registrationBody) {
         userService.register(registrationBody, Role.CUSTOMER);
         return ResponseEntity.ok().body("{\"message\": \"Registration successful\"}");
     }
@@ -51,7 +48,7 @@ public class RegistrationController {
      *         or a ResponseEntity with status UNAUTHORIZED if authentication fails
      */
     @PostMapping("/login")
-    public ResponseEntity<?> LoginUser(@Valid @RequestBody LoginBody loginBody) {
+    public ResponseEntity<?> LoginUser(@Valid @RequestBody LoginDTO loginBody) {
         String token = userService.verify(loginBody);
         if(token != null) {
             return ResponseEntity.ok(Collections.singletonMap("token", token));

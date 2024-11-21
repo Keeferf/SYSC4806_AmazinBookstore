@@ -100,7 +100,15 @@ public class PurchaseController {
 
         return ResponseEntity.ok("Checkout successful.");
     }
-
+    
+    /**
+     * Retrieves the purchase history for the authenticated user.
+     * Fetches all checkout records associated with the user and converts them to DTOs
+     * containing purchase details like ID, date, and items purchased.
+     *
+     * @param principal The authenticated user's principal containing user details
+     * @return ResponseEntity containing a list of PurchaseDTO objects representing the user's purchase history
+     */
     @GetMapping("/history")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<PurchaseDTO>> getPurchaseHistory(Principal principal) {

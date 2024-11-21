@@ -2,11 +2,13 @@ package controller;
 
 import com.bookstore.BookStoreApplication;
 import com.bookstore.model.Book;
+import com.bookstore.dto.RegistrationDTO;
 import com.bookstore.model.Role;
 import com.bookstore.model.User;
 import com.bookstore.repository.BookRepository;
 import com.bookstore.repository.CheckoutRepository;
 import com.bookstore.repository.UserRepository;
+import com.bookstore.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,9 @@ public class PurchaseControllerTest {
     @Autowired
     private CheckoutRepository checkoutRepository;
 
+    @Autowired
+    UserService userService;
+
     private User customerUser;
     private Book book;
 
@@ -46,8 +51,12 @@ public class PurchaseControllerTest {
         userRepository.deleteAll();
 
         // Create and save sample user and book
-        customerUser = new User("customerUser", Role.CUSTOMER);
-        userRepository.save(customerUser);
+
+        // Create customer user
+        RegistrationDTO customer = new RegistrationDTO("customer", "pass", "customer@email.com",
+                "CustomerFirstName", "lastName");
+        userService.register(customer, Role.CUSTOMER);
+
 
         book = new Book(
                 "Test ISBN",
@@ -64,6 +73,7 @@ public class PurchaseControllerTest {
 
     @Test
     public void successfulCheckout() throws Exception {
+        
         mockMvc.perform(post("/api/purchase/checkout")
                         .param("userId", customerUser.getId().toString())
                         .contentType(MediaType.APPLICATION_JSON)

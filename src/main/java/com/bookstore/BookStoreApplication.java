@@ -1,10 +1,8 @@
 package com.bookstore;
 
-import com.bookstore.model.RegistrationBody;
+import com.bookstore.dto.RegistrationDTO;
 import com.bookstore.model.Role;
-import com.bookstore.model.User;
 import com.bookstore.repository.UserRepository;
-import com.bookstore.service.JWTService;
 import com.bookstore.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,8 +11,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootApplication
 public class BookStoreApplication {
@@ -43,13 +39,13 @@ public class BookStoreApplication {
                 log.info("Initializing default users...");
 
                 // Create customer user
-                RegistrationBody customer = new RegistrationBody("customer", "pass", "customer@email.com",
+                RegistrationDTO customer = new RegistrationDTO("customer", "pass", "customer@email.com",
                         "CustomerFirstName", "lastName");
                 userService.register(customer, Role.CUSTOMER);
                 log.info("Created customer user with ID: {}", customer.getUsername());
 
                 // Create admin user
-                RegistrationBody admin = new RegistrationBody("admin", "admin123", "admin@email.com",
+                RegistrationDTO admin = new RegistrationDTO("admin", "admin123", "admin@email.com",
                         "AdminFirst", "AdminLast");
                 userService.register(admin, Role.ADMIN);
                 log.info("Created admin user with Username: {}", admin.getUsername());

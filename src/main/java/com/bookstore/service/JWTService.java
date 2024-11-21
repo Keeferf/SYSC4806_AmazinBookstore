@@ -1,13 +1,20 @@
 package com.bookstore.service;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.bookstore.model.User;
-import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
 
 /**
  * JWTService is a Spring service that provides methods for generating and
@@ -19,44 +26,70 @@ import java.util.Date;
  */
 @Service
 public class JWTService {
-    @Value("${jwt.algorithm.key}")
-    private String key;
-    @Value("${jwt.issuer}")
-    private String issuer;
-    @Value("${jwt.expiryInSeconds}")
-    private long expiryInSeconds;
-    private Algorithm algorithm;
-    private static final String USERNAME_KEY = "USERNAME";
 
-    /**
-     * Initializes the algorithm used for signing JWT tokens using the HMAC256 algorithm
-     * with a key specified in the application properties.
-     */
-    @PostConstruct
-    public void postConstruct() {
-        algorithm = Algorithm.HMAC256(key);
+
+    private String secretkey = "";
+
+    public JWTService() {
+
+        try {
+            KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
+            SecretKey sk = keyGen.generateKey();
+            secretkey = Base64.getEncoder().encodeToString(sk.getEncoded());
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    /**
-     * Generates a JSON Web Token (JWT) for the given user.
-     * @param user the user for whom the token is to be generated
-     * @return a JWT as a String containing the username claim, expiration time, and issuer information
-     */
-    public String generateToken(User user) {
-        return JWT.create()
-                .withClaim(USERNAME_KEY, user.getUsername())
-                .withExpiresAt(new Date(System.currentTimeMillis() + expiryInSeconds * 1000))
-                .withIssuer(issuer)
-                .sign(algorithm);
+    public String generateToken(String username) {
+        Map<String, Object> claims = new HashMap<>();
+        return Jwts.builder()
+                .claims()
+                .add(claims)
+                .subject(username)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + 60 * 60 * 30))
+                .and()
+                .signWith(getKey())
+                .compact();
+
     }
 
-    /**
-     * Extracts the username from the given JWT token.
-     * @param token the JWT token from which the username is to be extracted
-     * @return the username extracted from the token
-     */
-    public String getUsername(String token) {
-        return JWT.decode(token).getClaim(USERNAME_KEY).asString();
+    private SecretKey getKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(secretkey);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public String extractUserName(String token) {
+        // extract the username from jwt token
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    private <T> T extractClaim(String token, Function<Claims, T> claimResolver) {
+        final Claims claims = extractAllClaims(token);
+        return claimResolver.apply(claims);
+    }
+
+    private Claims extractAllClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(getKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    public boolean validateToken(String token, UserDetails userDetails) {
+        final String userName = extractUserName(token);
+        return (userName.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+
+    private boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
+    }
+
+    private Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
     }
 
 }
+

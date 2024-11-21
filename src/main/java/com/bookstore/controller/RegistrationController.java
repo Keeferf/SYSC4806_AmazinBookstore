@@ -35,14 +35,9 @@ public class RegistrationController {
      *         or status 409 (Conflict) if a user with the provided username or email already exists
      */
     @PostMapping("/register")
-    public ResponseEntity RegisterUser(@Valid @RequestBody RegistrationBody registrationBody) {
-        try {
-            userService.registerUser(registrationBody);
-            return ResponseEntity.ok().body("{\"message\": \"Registration successful\"}");
-        } catch (UserExistsException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("{\"error\": \"User already exists\"}");
-        }
-
+    public ResponseEntity<String> RegisterUser(@Valid @RequestBody RegistrationBody registrationBody) {
+        userService.register(registrationBody);
+        return ResponseEntity.ok().body("{\"message\": \"Registration successful\"}");
     }
     /**
      * Authenticates a user and returns a JWT if the login is successful.
@@ -51,8 +46,8 @@ public class RegistrationController {
      *         or a ResponseEntity with status UNAUTHORIZED if authentication fails
      */
     @PostMapping("/login")
-    public ResponseEntity LoginUser(@Valid @RequestBody LoginBody loginBody) {
-        String jwt = userService.loginUser(loginBody);
+    public ResponseEntity<String> LoginUser(@Valid @RequestBody LoginBody loginBody) {
+        String jwt = userService.verify(loginBody);
         if(jwt != null) {
             return ResponseEntity.ok().body("{\"message\": \"Registration successful\"}");
         }

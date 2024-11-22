@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('viewHistoryBtn').addEventListener('click', viewPurchaseHistory);
 
     // Load initial content based on role
+    updateLoginStatus();
     updateRoleView();
 });
 

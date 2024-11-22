@@ -5,7 +5,6 @@ import com.bookstore.model.UserPrincipal;
 import com.bookstore.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +15,7 @@ import java.util.Optional;
  * to load user-specific data for authentication.
  */
 @Service
-public class MyUserDetailsService implements UserDetailsService {
+public class UserDetailsService implements org.springframework.security.core.userdetails.UserDetailsService {
 
     @Autowired
     private UserRepository userRepo;

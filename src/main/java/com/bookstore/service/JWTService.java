@@ -31,7 +31,7 @@ public class JWTService {
     /**
      * The base64-encoded secret key used for signing JWTs.
      */
-    private String secretkey = "";
+    private String secretkey;
 
     /**
      * Constructor that initializes the JWT service with a randomly generated HmacSHA256 secret key.

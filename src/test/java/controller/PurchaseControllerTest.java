@@ -17,9 +17,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(classes = BookStoreApplication.class)
 @AutoConfigureMockMvc
@@ -56,6 +56,8 @@ public class PurchaseControllerTest {
         RegistrationDTO customer = new RegistrationDTO("customer", "pass", "customer@email.com",
                 "CustomerFirstName", "lastName");
         userService.register(customer, Role.CUSTOMER);
+        customerUser = userRepository.findByUsernameIgnoreCase("customer")
+                .orElseThrow(() -> new RuntimeException("User not found!"));
 
 
         book = new Book(
@@ -75,7 +77,7 @@ public class PurchaseControllerTest {
     public void successfulCheckout() throws Exception {
         
         mockMvc.perform(post("/api/purchase/checkout")
-                        .param("userId", customerUser.getId().toString())
+                        .with(user(customerUser.getUsername()).roles("CUSTOMER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("[{\"bookId\":" + book.getId() + ",\"quantity\":2}]"))
                 .andExpect(status().isOk())
@@ -90,7 +92,7 @@ public class PurchaseControllerTest {
         Long id = 999L;
 
         mockMvc.perform(post("/api/purchase/checkout")
-                        .param("userId", customerUser.getId().toString())
+                        .with(user(customerUser.getUsername()).roles("CUSTOMER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("[{\"bookId\":" + id + ",\"quantity\":1}]"))
                 .andExpect(status().isBadRequest())
@@ -103,7 +105,7 @@ public class PurchaseControllerTest {
         bookRepository.save(book);
 
         mockMvc.perform(post("/api/purchase/checkout")
-                        .param("userId", customerUser.getId().toString())
+                        .with(user(customerUser.getUsername()).roles("CUSTOMER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("[{\"bookId\":" + book.getId() + ",\"quantity\":1}]"))
                 .andExpect(status().isBadRequest())

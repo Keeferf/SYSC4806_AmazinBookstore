@@ -37,7 +37,7 @@ function switchRole() {
 function updateRoleView() {
     const customerActions = document.getElementById('customerActions');
 
-    if (currentUserRole === 'admin') {
+    if (hasRole('admin')) {
         // Hide customer-specific elements
         customerActions.style.display = 'none';
         loadAdminView();
@@ -163,6 +163,7 @@ function showHome() {
     } else {
         loadBooks();
     }
+    updateRoleView();
 }
 
 function updateSearchInputs() {
@@ -706,13 +707,19 @@ function updateLoginStatus() {
         if (user && user.sub) {
             statusMessage.textContent = `Logged in as ${user.sub}`; // Display username
             logoutBtn.style.display = 'inline-block'; // Show logout button
+            loginButton.style.display = 'none';
+            signupButton.style.display = 'none';
         } else {
             statusMessage.textContent = 'You are not logged in.';
             logoutBtn.style.display = 'none';
+            loginButton.style.display = 'inline-block';
+            signupButton.style.display = 'inline-block';
         }
     } else {
         statusMessage.textContent = 'You are not logged in.';
         logoutBtn.style.display = 'none';
+        loginButton.style.display = 'inline-block';
+        signupButton.style.display = 'inline-block';
     }
 }
 // Function to handle logout
@@ -720,6 +727,7 @@ logoutBtn.addEventListener('click', () => {
     localStorage.removeItem(jwt_token); // Remove token from localStorage
     alert('You have been logged out.');
     updateLoginStatus(); // Update the UI
+    updateRoleView();
 });
 
 

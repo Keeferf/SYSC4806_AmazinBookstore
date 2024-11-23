@@ -1,20 +1,20 @@
 package com.bookstore.service;
 
 import com.bookstore.model.Role;
+import com.bookstore.model.User;
+import com.bookstore.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -32,6 +32,9 @@ public class JWTService {
      * The base64-encoded secret key used for signing JWTs.
      */
     private String secretkey;
+
+    @Autowired
+    UserRepository userRepository;
 
     /**
      * Constructor that initializes the JWT service with a randomly generated HmacSHA256 secret key.
@@ -55,8 +58,13 @@ public class JWTService {
      */
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
+        Optional<User> user = userRepository.findByUsernameIgnoreCase(username);
+        if(user.isPresent()) {
+            claims.put("role", user.get().getRole());
+        } else {
+            claims.put("role", Role.CUSTOMER); //default
+        }
 
-        claims.put("role", Role.CUSTOMER); //temp
         return Jwts.builder()
                 .claims()
                 .add(claims)

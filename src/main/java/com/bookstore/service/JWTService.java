@@ -7,13 +7,15 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import java.security.NoSuchAlgorithmException;
+import java.io.File;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.function.Function;
 
@@ -28,34 +30,30 @@ import java.util.function.Function;
 @Service
 public class JWTService {
 
-    /**
-     * The base64-encoded secret key used for signing JWTs.
-     */
-    private String secretkey;
+    private static final String SECRETKEY_FILE = "jwt_secret.key";
+    private String secretKey;
 
     @Autowired
     UserRepository userRepository;
 
-    /**
-     * Constructor that initializes the JWT service with a randomly generated HmacSHA256 secret key.
-     * @throws RuntimeException if the HmacSHA256 algorithm is not available
-     */
-    public JWTService() {
-
+    @PostConstruct
+    public void init() {
         try {
-            KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
-            SecretKey sk = keyGen.generateKey();
-            secretkey = Base64.getEncoder().encodeToString(sk.getEncoded());
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
+            File keyFile = new File(SECRETKEY_FILE);
+            if (keyFile.exists()) {
+                secretKey = Files.readString(keyFile.toPath());
+            } else {
+                KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
+                SecretKey key = keyGen.generateKey();
+                secretKey = Base64.getEncoder().encodeToString(key.getEncoded());
+
+                Files.writeString(keyFile.toPath(), secretKey);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize JWT secret key", e);
         }
     }
 
-    /**
-     * Generates a JWT token for the specified username with default claims.
-     * @param username the username to be included in the token
-     * @return a signed JWT token string
-     */
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
         Optional<User> user = userRepository.findByUsername(username);
@@ -63,27 +61,20 @@ public class JWTService {
             claims.put("role", user.get().getRole());
             claims.put("userId", user.get().getId());
         } else {
-            claims.put("role", Role.CUSTOMER); //default
+            claims.put("role", Role.CUSTOMER);
         }
 
         return Jwts.builder()
-                .claims()
-                .add(claims)
+                .claims(claims)
                 .subject(username)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 60 * 60 * 1000 * 24)) // 24 hours
-                .and()
+                .expiration(new Date(System.currentTimeMillis() + 60 * 60 * 1000 * 24))
                 .signWith(getKey())
                 .compact();
-
     }
 
-    /**
-     * Retrieves the signing key used for JWT operations.
-     * @return SecretKey instance for JWT signing
-     */
     private SecretKey getKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secretkey);
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 

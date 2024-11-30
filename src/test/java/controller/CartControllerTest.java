@@ -42,21 +42,21 @@ public class CartControllerTest {
         autoCloseable = MockitoAnnotations.openMocks(this);
 
         user = new User();
-        user.setId(1L);
+        user.setId("1L");
         user.setUsername("testUser");
 
         book = new Book();
-        book.setId(1);
+        book.setId("1");
         book.setTitle("Test Book");
         book.setPrice(29.99);
 
         cartItem = new CartItem();
-        cartItem.setId(1L);
+        cartItem.setId("1L");
         cartItem.setBook(book);
         cartItem.setQuantity(2);
 
         cart = new Cart();
-        cart.setId(1L);
+        cart.setId("1L");
         cart.setUser(user);
         cart.setItems(new ArrayList<>());
     }

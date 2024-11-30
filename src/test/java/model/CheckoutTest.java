@@ -19,8 +19,9 @@ public class CheckoutTest {
     @Before
     public void setUp() {
         user = new User("customerUser", Role.CUSTOMER);
+        user.setId("user123"); // Set a test ID for the user
         items = new ArrayList<>();
-        
+
         Book book = new Book(
                 "Test ISBN",
                 "Test Title",
@@ -31,11 +32,14 @@ public class CheckoutTest {
                 10.00,
                 100
         );
+        book.setId("book123"); // Set a test ID for the book
+
+        checkout = new Checkout(user); // Create checkout first
         PurchaseItem item = new PurchaseItem(book, 2, checkout);
         items.add(item);
+        checkout.setItems(items);
 
         purchaseDate = LocalDateTime.now();
-        checkout = new Checkout(user, items);
     }
 
     @Test
@@ -51,19 +55,15 @@ public class CheckoutTest {
     }
 
     @Test
-    public void getUser() {
-        assertEquals(user, checkout.getUser());
-        assertEquals("customerUser", checkout.getUser().getUsername());
-        assertEquals(Role.CUSTOMER, checkout.getUser().getRole());
+    public void getUserId() {
+        assertEquals(user.getId(), checkout.getUserId());
     }
 
     @Test
-    public void setUser() {
-        User newCustomerUser = new User("newCustomer", Role.CUSTOMER);
-        checkout.setUser(newCustomerUser);
-        assertEquals(newCustomerUser, checkout.getUser());
-        assertEquals("newCustomer", checkout.getUser().getUsername());
-        assertEquals(Role.CUSTOMER, checkout.getUser().getRole());
+    public void setUserId() {
+        String newUserId = "user456";
+        checkout.setUserId(newUserId);
+        assertEquals(newUserId, checkout.getUserId());
     }
 
     @Test
@@ -78,8 +78,18 @@ public class CheckoutTest {
     @Test
     public void setItems() {
         List<PurchaseItem> newItems = new ArrayList<>();
-        Book newBook = new Book("New ISBN", "New Book", "Description", "Author", "Publisher",
-                "http://example.com/new.jpg", 19.99, 50);
+        Book newBook = new Book(
+                "New ISBN",
+                "New Book",
+                "Description",
+                "Author",
+                "Publisher",
+                "http://example.com/new.jpg",
+                19.99,
+                50
+        );
+        newBook.setId("book456"); // Set a test ID for the new book
+
         PurchaseItem newItem = new PurchaseItem(newBook, 3, checkout);
         newItems.add(newItem);
 
@@ -94,7 +104,8 @@ public class CheckoutTest {
     @Test
     public void getPurchaseDate() {
         assertNotNull(checkout.getPurchaseDate());
-        assertTrue(purchaseDate.isBefore(checkout.getPurchaseDate()) || purchaseDate.isEqual(checkout.getPurchaseDate()));
+        assertTrue(purchaseDate.isBefore(checkout.getPurchaseDate()) ||
+                purchaseDate.isEqual(checkout.getPurchaseDate()));
     }
 
     @Test
@@ -102,5 +113,41 @@ public class CheckoutTest {
         LocalDateTime newPurchaseDate = LocalDateTime.now().plusDays(1);
         checkout.setPurchaseDate(newPurchaseDate);
         assertEquals(newPurchaseDate, checkout.getPurchaseDate());
+    }
+
+    @Test
+    public void addItem() {
+        Book newBook = new Book(
+                "ISBN2",
+                "Title2",
+                "Desc2",
+                "Author2",
+                "Publisher2",
+                "http://example.com/test2.jpg",
+                20.00,
+                50
+        );
+        newBook.setId("book789");
+
+        PurchaseItem newItem = new PurchaseItem(newBook, 1, checkout);
+        checkout.addItem(newItem);
+
+        assertEquals(2, checkout.getItems().size());
+        assertTrue(checkout.getItems().contains(newItem));
+    }
+
+    @Test
+    public void removeItem() {
+        PurchaseItem itemToRemove = checkout.getItems().get(0);
+        checkout.removeItem(itemToRemove);
+        assertEquals(0, checkout.getItems().size());
+        assertFalse(checkout.getItems().contains(itemToRemove));
+    }
+
+    @Test
+    public void setItemsWithNull() {
+        checkout.setItems(null);
+        assertNotNull(checkout.getItems());
+        assertTrue(checkout.getItems().isEmpty());
     }
 }

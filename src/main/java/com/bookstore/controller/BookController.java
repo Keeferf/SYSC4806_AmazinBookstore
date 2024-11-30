@@ -109,7 +109,7 @@ public class BookController {
     @PostMapping
     public ResponseEntity<?> uploadBook(@RequestBody Book book) {
         // get current user from Security Context
-        if (isAdmin()) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied. Admin role required.");
+        if (!isAdmin()) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied. Admin role required.");
 
         try {
             Book savedBook = bookRepository.save(book);
@@ -130,7 +130,7 @@ public class BookController {
     @PutMapping("/{id}")
     public ResponseEntity<?> editBook(@PathVariable String id, @RequestBody Book bookDetails) {
         // get current user from Security Context
-        if (isAdmin()) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied. Admin role required.");
+        if (!isAdmin()) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied. Admin role required.");
 
         Book existingBook = bookRepository.findById(id).orElse(null);
         if (existingBook == null) {
@@ -178,7 +178,7 @@ public class BookController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteBook(@PathVariable String id) {
-        if (isAdmin()) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied. Admin role required.");
+        if (!isAdmin()) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied. Admin role required.");
         return bookRepository.findById(id).map(book -> {
             bookRepository.delete(book);
             return ResponseEntity.ok().body("Book deleted successfully.");
@@ -218,7 +218,7 @@ public class BookController {
     }
 
     private Set<String> getUserPurchasedBooks(User user) {
-        return checkoutRepository.findByUser(user).stream()
+        return checkoutRepository.findByUserId(user.getId()).stream()
                 .flatMap(checkout -> checkout.getItems().stream())
                 .map(PurchaseItem::getBookId) // get book IDs
                 .collect(Collectors.toSet());
@@ -297,7 +297,7 @@ public class BookController {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return user.getRole() == Role.ADMIN;
+        return Role.ADMIN.equals(user.getRole());
     }
 
 

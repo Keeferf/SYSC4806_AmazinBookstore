@@ -21,8 +21,7 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class BookControllerTest {
 
@@ -54,27 +53,10 @@ public class BookControllerTest {
     void setUp() {
         autoCloseable = MockitoAnnotations.openMocks(this);
 
-        book1 = new Book();
-        book1.setId(1);
-        book1.setIsbn("1234567890");
-        book1.setTitle("Test Book 1");
-        book1.setDescription("Description 1");
-        book1.setAuthor("Author 1");
-        book1.setPublisher("Publisher 1");
-        book1.setPictureURL("url1");
-        book1.setPrice(29.99);
-        book1.setInventory(10);
-
-        book2 = new Book();
-        book2.setId(2);
-        book2.setIsbn("0987654321");
-        book2.setTitle("Test Book 2");
-        book2.setDescription("Description 2");
-        book2.setAuthor("Author 2");
-        book2.setPublisher("Publisher 2");
-        book2.setPictureURL("url2");
-        book2.setPrice(19.99);
-        book2.setInventory(5);
+        book1 = new Book("1", "1234567890", "Test Book 1", "Description 1",
+                "Author 1", "Publisher 1", "url1", 29.99, 10);
+        book2 = new Book("2", "0987654321", "Test Book 2", "Description 2",
+                "Author 2", "Publisher 2", "url2", 19.99, 5);
 
         admin = new User("admin", Role.ADMIN);
         customer = new User("customer", Role.CUSTOMER);
@@ -90,9 +72,6 @@ public class BookControllerTest {
         }
     }
 
-    /**
-     * Tests retrieving all books from the repository
-     */
     @Test
     void testGetAllBooks() {
         List<Book> books = Arrays.asList(book1, book2);
@@ -106,38 +85,29 @@ public class BookControllerTest {
         assertEquals("Test Book 2", result.get(1).getTitle());
     }
 
-    /**
-     * Tests retrieving a book by ID when the book exists
-     */
     @Test
-    void testGetExistingBook() {
-        when(bookRepository.findById(1L)).thenReturn(Optional.of(book1));
+    void testGetBookByIdWhenExists() {
+        when(bookRepository.findById("1")).thenReturn(Optional.of(book1));
 
-        ResponseEntity<Book> response = bookController.getBookById(1L);
+        ResponseEntity<Book> response = bookController.getBookById("1");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(book1.getTitle(), response.getBody().getTitle());
     }
 
-    /**
-     * Tests retrieving a book by ID when the book doesn't exist
-     */
     @Test
-    void testGetNonexistentBook() {
-        when(bookRepository.findById(1L)).thenReturn(Optional.empty());
+    void testGetBookByIdWhenNotFound() {
+        when(bookRepository.findById("3")).thenReturn(Optional.empty());
 
-        ResponseEntity<Book> response = bookController.getBookById(1L);
+        ResponseEntity<Book> response = bookController.getBookById("3");
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 
-    /**
-     * Tests searching books by title with matching results
-     */
     @Test
-    void testSearchBooksByTitle() {
-        List<Book> matchingBooks = Arrays.asList(book1, book2);
-        when(bookRepository.findByTitleContainingIgnoreCase("Test")).thenReturn(matchingBooks);
+    void testSearchBooksByTitleWithMatches() {
+        when(bookRepository.findByTitleContainingIgnoreCase("Test"))
+                .thenReturn(Arrays.asList(book1, book2));
 
         List<Book> result = bookController.searchBooks("Test");
 
@@ -145,25 +115,20 @@ public class BookControllerTest {
         assertTrue(result.stream().anyMatch(book -> book.getTitle().equals("Test Book 1")));
     }
 
-    /**
-     * Tests searching books with no matching results
-     */
     @Test
-    void testSearchBooksNoMatches() {
-        when(bookRepository.findByTitleContainingIgnoreCase("Nonexistent")).thenReturn(new ArrayList<>());
+    void testSearchBooksByTitleNoMatches() {
+        when(bookRepository.findByTitleContainingIgnoreCase("Nonexistent"))
+                .thenReturn(new ArrayList<>());
 
         List<Book> result = bookController.searchBooks("Nonexistent");
 
         assertTrue(result.isEmpty());
     }
 
-    /**
-     * Tests searching books by ISBN
-     */
     @Test
-    void testSearchByIsbn() {
-        List<Book> matchingBooks = Arrays.asList(book1);
-        when(bookRepository.findByIsbnContainingIgnoreCase("123")).thenReturn(matchingBooks);
+    void testSearchBooksByIsbn() {
+        when(bookRepository.findByIsbnContainingIgnoreCase("123"))
+                .thenReturn(Collections.singletonList(book1));
 
         ResponseEntity<List<Book>> response = bookController.searchBooksByIsbn("123");
 
@@ -172,13 +137,10 @@ public class BookControllerTest {
         assertEquals("1234567890", response.getBody().get(0).getIsbn());
     }
 
-    /**
-     * Tests searching books by author
-     */
     @Test
-    void testSearchByAuthor() {
-        List<Book> matchingBooks = Arrays.asList(book1);
-        when(bookRepository.findByAuthorContainingIgnoreCase("Author 1")).thenReturn(matchingBooks);
+    void testSearchBooksByAuthor() {
+        when(bookRepository.findByAuthorContainingIgnoreCase("Author 1"))
+                .thenReturn(Collections.singletonList(book1));
 
         List<Book> result = bookController.searchBooksByAuthor("Author 1");
 
@@ -186,9 +148,6 @@ public class BookControllerTest {
         assertEquals("Author 1", result.get(0).getAuthor());
     }
 
-    /**
-     * Tests uploading a new book as admin
-     */
     @Test
     void testUploadBookAsAdmin() {
         when(authentication.getName()).thenReturn("admin");
@@ -200,11 +159,8 @@ public class BookControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 
-    /**
-     * Tests uploading a book with duplicate ISBN
-     */
     @Test
-    void testUploadDuplicateBook() {
+    void testUploadBookWithDuplicateIsbn() {
         when(authentication.getName()).thenReturn("admin");
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
         when(bookRepository.save(any(Book.class)))
@@ -215,68 +171,56 @@ public class BookControllerTest {
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
     }
 
-    /**
-     * Tests updating an existing book as admin
-     */
     @Test
-    void testUpdateExistingBook() {
+    void testUpdateBookWhenExists() {
         when(authentication.getName()).thenReturn("admin");
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
-        when(bookRepository.findById(1L)).thenReturn(Optional.of(book1));
+        when(bookRepository.findById("1")).thenReturn(Optional.of(book1));
         when(bookRepository.save(any(Book.class))).thenReturn(book1);
 
-        Book updatedBook = new Book();
-        updatedBook.setId(1);
-        updatedBook.setTitle("Updated Title");
-        updatedBook.setIsbn("1234567890");
+        Book updatedBook = new Book("1", "1234567890", "Updated Title", null,
+                null, null, null, 0, 0);
 
-        ResponseEntity<?> response = bookController.editBook(1L, updatedBook);
+        ResponseEntity<?> response = bookController.editBook("1", updatedBook);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 
-    /**
-     * Tests updating a non-existent book
-     */
     @Test
-    void testUpdateNonexistentBook() {
+    void testUpdateBookWhenNotFound() {
         when(authentication.getName()).thenReturn("admin");
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
-        when(bookRepository.findById(1L)).thenReturn(Optional.empty());
+        when(bookRepository.findById("3")).thenReturn(Optional.empty());
 
-        ResponseEntity<?> response = bookController.editBook(1L, book1);
+        ResponseEntity<?> response = bookController.editBook("3", book1);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 
-    /**
-     * Tests deleting an existing book as admin
-     */
     @Test
-    void testDeleteExistingBook() {
+    void testDeleteBookWhenExists() {
         when(authentication.getName()).thenReturn("admin");
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
-        when(bookRepository.findById(1L)).thenReturn(Optional.of(book1));
+        when(bookRepository.findById("1")).thenReturn(Optional.of(book1));
 
-        ResponseEntity<?> response = bookController.deleteBook(1L);
+        ResponseEntity<?> response = bookController.deleteBook("1");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(bookRepository).delete(book1);
     }
 
-    /**
-     * Tests deleting a non-existent book
-     */
     @Test
-    void testDeleteNonexistentBook() {
+    void testDeleteBookWhenNotFound() {
         when(authentication.getName()).thenReturn("admin");
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
-        when(bookRepository.findById(1L)).thenReturn(Optional.empty());
+        when(bookRepository.findById("3")).thenReturn(Optional.empty());
 
-        ResponseEntity<?> response = bookController.deleteBook(1L);
+        ResponseEntity<?> response = bookController.deleteBook("3");
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
+}
+
 
     /**
      * Tests getting recommendations when user has purchase history and similar users exist
@@ -285,17 +229,17 @@ public class BookControllerTest {
     void testGetRecommendationsWithSimilarUsers() {
         // Create test users
         User user1 = new User("user1", Role.CUSTOMER);
-        user1.setId(1L);
+        user1.setId("1L");
         User user2 = new User("user2", Role.CUSTOMER);
-        user2.setId(2L);
+        user2.setId("2L");
 
         // Create test books
         Book book1 = new Book();
-        book1.setId(1);
+        book1.setId("1");
         Book book2 = new Book();
-        book2.setId(2);
+        book2.setId("2");
         Book book3 = new Book();
-        book3.setId(3);
+        book3.setId("3");
 
         // Create purchase histories
         Checkout user1Checkout = new Checkout();

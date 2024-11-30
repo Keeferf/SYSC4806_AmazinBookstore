@@ -34,6 +34,7 @@ build/
 
 ### VS Code ###
 .vscode/
+*.key
 
 ### Mac OS ###
 .DS_Store

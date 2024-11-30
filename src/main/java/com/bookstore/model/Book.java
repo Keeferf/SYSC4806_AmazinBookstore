@@ -1,9 +1,8 @@
 package com.bookstore.model;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Id;
 
 @Document(collection = "books")
 public class Book {
@@ -11,7 +10,7 @@ public class Book {
     @Id
     private String id; // Primary key
 
-    @Column(unique = true)
+    @Indexed(unique = true)
     private String isbn;
 
     private String title;

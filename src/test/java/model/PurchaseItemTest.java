@@ -15,112 +15,113 @@ public class PurchaseItemTest {
     @Before
     public void setUp() {
         book = new Book(
+                "1",
                 "Test ISBN",
                 "Test Title",
                 "Test Description",
                 "Test Author",
                 "Test Publisher",
-                "http://example.com/test.jpg",
                 10.00,
                 10
         );
         checkout = new Checkout();
+        checkout.setId("purchase123");
         purchaseItem = new PurchaseItem(book, 2, checkout);
     }
 
     @Test
-    public void getId() {
+    public void testGetId() {
         purchaseItem.setId("1");
         assertEquals("1", purchaseItem.getId());
     }
 
     @Test
-    public void setId() {
+    public void testSetId() {
         purchaseItem.setId("5");
         assertEquals("5", purchaseItem.getId());
     }
 
     @Test
-    public void getBookId() {
+    public void testGetBookId() {
         assertEquals(book.getId(), purchaseItem.getBookId());
     }
 
     @Test
-    public void setBookId() {
+    public void testSetBookId() {
         String newBookId = "2";
         purchaseItem.setBookId(newBookId);
         assertEquals(newBookId, purchaseItem.getBookId());
     }
 
     @Test
-    public void getIsbn() {
+    public void testGetIsbn() {
         assertEquals(book.getIsbn(), purchaseItem.getIsbn());
     }
 
     @Test
-    public void setIsbn() {
+    public void testSetIsbn() {
         String newIsbn = "New ISBN";
         purchaseItem.setIsbn(newIsbn);
         assertEquals(newIsbn, purchaseItem.getIsbn());
     }
 
     @Test
-    public void getTitle() {
+    public void testGetTitle() {
         assertEquals(book.getTitle(), purchaseItem.getTitle());
     }
 
     @Test
-    public void setTitle() {
+    public void testSetTitle() {
         String newTitle = "New Title";
         purchaseItem.setTitle(newTitle);
         assertEquals(newTitle, purchaseItem.getTitle());
     }
 
     @Test
-    public void getAuthor() {
+    public void testGetAuthor() {
         assertEquals(book.getAuthor(), purchaseItem.getAuthor());
     }
 
     @Test
-    public void setAuthor() {
+    public void testSetAuthor() {
         String newAuthor = "New Author";
         purchaseItem.setAuthor(newAuthor);
         assertEquals(newAuthor, purchaseItem.getAuthor());
     }
 
     @Test
-    public void getPurchasePrice() {
-        assertEquals(book.getPrice(), purchaseItem.getPurchasePrice());
+    public void testGetPurchasePrice() {
+        assertEquals(book.getPrice(), purchaseItem.getPurchasePrice(), 0.01);
     }
 
     @Test
-    public void setPurchasePrice() {
+    public void testSetPurchasePrice() {
         Double newPurchasePrice = 17.99;
         purchaseItem.setPurchasePrice(newPurchasePrice);
-        assertEquals(newPurchasePrice, purchaseItem.getPurchasePrice());
+        assertEquals(newPurchasePrice, purchaseItem.getPurchasePrice(), 0.01);
     }
 
     @Test
-    public void getQuantity() {
+    public void testGetQuantity() {
         assertEquals((Integer) 2, purchaseItem.getQuantity());
     }
 
     @Test
-    public void setQuantity() {
+    public void testSetQuantity() {
         Integer newQuantity = 5;
         purchaseItem.setQuantity(newQuantity);
         assertEquals(newQuantity, purchaseItem.getQuantity());
     }
 
     @Test
-    public void getPurchase() {
-        assertEquals(checkout, purchaseItem.getPurchase());
+    public void testGetPurchaseId() {
+        assertEquals(checkout.getId(), purchaseItem.getPurchaseId());
     }
 
     @Test
-    public void setPurchase() {
-        Checkout newCheckout = new Checkout();
-        purchaseItem.setPurchase(newCheckout);
-        assertEquals(newCheckout, purchaseItem.getPurchase());
+    public void testSetPurchaseId() {
+        String newPurchaseId = "newPurchaseId";
+        purchaseItem.setPurchaseId(newPurchaseId);
+        assertEquals(newPurchaseId, purchaseItem.getPurchaseId());
     }
 }

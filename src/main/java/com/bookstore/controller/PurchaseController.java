@@ -13,10 +13,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -39,64 +37,53 @@ public class PurchaseController {
      * Handles the checkout process.
      * Deducts purchased quantities from inventory and creates purchase records.
      *
-     * @param principal The authentication principal.
-     * @param cartItems The list of items in the cart.
-     * @return ResponseEntity with status and message.
+     * @param cartItems The list of items in the cart
+     * @param principal The authentication principal
+     * @return ResponseEntity with status and message
      */
     @PostMapping("/checkout")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<String> checkout(@RequestBody List<CartItemDTO> cartItems, Principal principal) {
-        String username = principal.getName();
-        System.out.println("Username: " + username);
+        try {
+            String username = principal.getName();
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found: " + username));
 
-        User user = userRepository.findByUsername(username).orElse(null);
+            // Create and save checkout first to get an ID
+            Checkout checkout = new Checkout(user);
+            checkout = purchaseRepository.save(checkout);
 
-        if (user == null || user.getRole() != Role.CUSTOMER) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not found or invalid role.");
-        }
+            List<PurchaseItem> purchaseItems = new ArrayList<>();
 
-        List<PurchaseItem> purchaseItems = new ArrayList<>();
+            for (CartItemDTO cartItemDTO : cartItems) {
+                Book book = bookRepository.findById(cartItemDTO.getBookId())
+                        .orElseThrow(() -> new RuntimeException("Book not found: " + cartItemDTO.getBookId()));
 
-        for (CartItemDTO cartItemDTO : cartItems) {
-            Optional<Book> optionalBook = bookRepository.findById(cartItemDTO.getBookId());  // Use String ID
-            if (optionalBook.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Book with ID " + cartItemDTO.getBookId() + " not found.");
+                if (book.getInventory() < cartItemDTO.getQuantity()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body("Not enough inventory for book: " + book.getTitle());
+                }
+
+                // Update inventory
+                book.setInventory(book.getInventory() - cartItemDTO.getQuantity());
+                bookRepository.save(book);
+
+                // Create purchase item with just the ID reference
+                PurchaseItem purchaseItem = new PurchaseItem(book, cartItemDTO.getQuantity(), checkout);
+                purchaseItems.add(purchaseItem);
             }
 
-            Book book = optionalBook.get();
+            // Update checkout with items
+            checkout.setItems(purchaseItems);
+            purchaseRepository.save(checkout);
 
-            // Check if enough inventory is available
-            if (book.getInventory() < cartItemDTO.getQuantity()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Not enough inventory for book: " + book.getTitle());
-            }
-
-            // Deduct the purchased quantity from the inventory
-            book.setInventory(book.getInventory() - cartItemDTO.getQuantity());
-            bookRepository.save(book);
-
-            // Create PurchaseItem with book details
-            PurchaseItem purchaseItem = new PurchaseItem(book, cartItemDTO.getQuantity(), null);
-            purchaseItems.add(purchaseItem);
+            return ResponseEntity.ok("Checkout successful");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Checkout failed: " + e.getMessage());
         }
-
-        // Create a new checkout record
-        Checkout purchase = new Checkout();
-        purchase.setUser(user);
-        purchase.setPurchaseDate(LocalDateTime.now());
-        purchase.setItems(purchaseItems);
-
-        // Associate purchase items with the checkout
-        for (PurchaseItem item : purchaseItems) {
-            item.setPurchase(purchase);
-        }
-
-        purchaseRepository.save(purchase);
-
-        return ResponseEntity.ok("Checkout successful.");
     }
-    
+
     /**
      * Retrieves the purchase history for the authenticated user.
      * Fetches all checkout records associated with the user and converts them to DTOs
@@ -108,35 +95,36 @@ public class PurchaseController {
     @GetMapping("/history")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<PurchaseDTO>> getPurchaseHistory(Principal principal) {
-        String username = principal.getName();
-        User user = userRepository.findByUsername(username).orElse(null);
+        try {
+            String username = principal.getName();
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found: " + username));
 
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            List<Checkout> checkouts = purchaseRepository.findByUserId(user.getId());
+            List<PurchaseDTO> purchaseHistory = new ArrayList<>();
+
+            for (Checkout checkout : checkouts) {
+                List<CartItemDTO> items = checkout.getItems().stream()
+                        .map(item -> new CartItemDTO(
+                                item.getBookId(),
+                                item.getQuantity(),
+                                item.getTitle(),
+                                item.getAuthor(),
+                                item.getIsbn(),
+                                item.getPurchasePrice()
+                        ))
+                        .collect(Collectors.toList());
+
+                purchaseHistory.add(new PurchaseDTO(
+                        checkout.getId(),
+                        checkout.getPurchaseDate(),
+                        items
+                ));
+            }
+
+            return ResponseEntity.ok(purchaseHistory);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-
-        List<Checkout> checkouts = purchaseRepository.findByUser(user);
-        List<PurchaseDTO> purchaseHistory = new ArrayList<>();
-
-        for (Checkout checkout : checkouts) {
-            List<CartItemDTO> items = checkout.getItems().stream()
-                    .map(item -> new CartItemDTO(
-                            item.getBookId(),
-                            item.getQuantity(),
-                            item.getTitle(),
-                            item.getAuthor(),
-                            item.getIsbn(),
-                            item.getPurchasePrice()
-                    ))
-                    .collect(Collectors.toList());
-
-            purchaseHistory.add(new PurchaseDTO(
-                    checkout.getId(),
-                    checkout.getPurchaseDate(),
-                    items
-            ));
-        }
-
-        return ResponseEntity.ok(purchaseHistory);
     }
 }

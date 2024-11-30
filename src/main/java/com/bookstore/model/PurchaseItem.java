@@ -1,25 +1,19 @@
 package com.bookstore.model;
 
-import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import jakarta.persistence.Id;
 
 @Document(collection = "purchaseItems")
 public class PurchaseItem {
     @Id
     private String id;
-
     private String bookId;
     private String isbn;
     private String title;
     private String author;
     private Double purchasePrice;
-
     private Integer quantity;
-
-    @DBRef
-    private Checkout purchase;
+    private String purchaseId;
 
     public PurchaseItem() {}
 
@@ -27,13 +21,17 @@ public class PurchaseItem {
      * Represents an individual item in a purchase order, storing book details at time of purchase.
      */
     public PurchaseItem(Book book, Integer quantity, Checkout purchase) {
-        this.bookId = (String) book.getId();
-        this.isbn = book.getIsbn();
-        this.title = book.getTitle();
-        this.author = book.getAuthor();
-        this.purchasePrice = book.getPrice();
+        if (book != null) {
+            this.bookId = book.getId();
+            this.isbn = book.getIsbn();
+            this.title = book.getTitle();
+            this.author = book.getAuthor();
+            this.purchasePrice = book.getPrice();
+        }
         this.quantity = quantity;
-        this.purchase = purchase;
+        if (purchase != null) {
+            this.purchaseId = purchase.getId();
+        }
     }
 
     /**
@@ -148,19 +146,12 @@ public class PurchaseItem {
         this.quantity = quantity;
     }
 
-    /**
-     * Gets the purchase order that this PurchaseItem belongs to.
-     * @return the purchase order of this PurchaseItem
-     */
-    public Checkout getPurchase() {
-        return purchase;
+
+    public String getPurchaseId() {
+        return purchaseId;
     }
 
-    /**
-     * Sets the purchase order that this PurchaseItem belongs to.
-     * @param purchase the purchase order to set
-     */
-    public void setPurchase(Checkout purchase) {
-        this.purchase = purchase;
+    public void setPurchaseId(String purchaseId) {
+        this.purchaseId = purchaseId;
     }
 }

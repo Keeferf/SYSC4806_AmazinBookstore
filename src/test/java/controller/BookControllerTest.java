@@ -16,7 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-
+import java.security.Principal;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,6 +40,9 @@ public class BookControllerTest {
     @Mock
     private CheckoutRepository checkoutRepository;
 
+    @Mock
+    private Principal principal;
+
     @InjectMocks
     private BookController bookController;
 
@@ -53,16 +56,25 @@ public class BookControllerTest {
     void setUp() {
         autoCloseable = MockitoAnnotations.openMocks(this);
 
-        book1 = new Book("1", "1234567890", "Test Book 1", "Description 1",
+        // Changed constructor calls to match Book.java's constructor
+        book1 = new Book("1234567890", "Test Book 1", "Description 1",
                 "Author 1", "Publisher 1", "url1", 29.99, 10);
-        book2 = new Book("2", "0987654321", "Test Book 2", "Description 2",
+        book1.setId("1");
+
+        book2 = new Book("0987654321", "Test Book 2", "Description 2",
                 "Author 2", "Publisher 2", "url2", 19.99, 5);
+        book2.setId("2");
 
         admin = new User("admin", Role.ADMIN);
+        admin.setId("1");
         customer = new User("customer", Role.CUSTOMER);
+        customer.setId("2");
 
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
+
+        // Setup principal mock
+        when(principal.getName()).thenReturn(customer.getUsername());
     }
 
     @Test
@@ -178,8 +190,9 @@ public class BookControllerTest {
         when(bookRepository.findById("1")).thenReturn(Optional.of(book1));
         when(bookRepository.save(any(Book.class))).thenReturn(book1);
 
-        Book updatedBook = new Book("1", "1234567890", "Updated Title", null,
-                null, null, null, 0, 0);
+        Book updatedBook = new Book("1234567890", "Updated Title", null,
+                null, null, null, 0.0, 0);
+        updatedBook.setId("1");
 
         ResponseEntity<?> response = bookController.editBook("1", updatedBook);
 
@@ -219,55 +232,38 @@ public class BookControllerTest {
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
-}
 
-
-    /**
-     * Tests getting recommendations when user has purchase history and similar users exist
-     */
     @Test
     void testGetRecommendationsWithSimilarUsers() {
-        // Create test users
-        User user1 = new User("user1", Role.CUSTOMER);
-        user1.setId("1L");
-        User user2 = new User("user2", Role.CUSTOMER);
-        user2.setId("2L");
-
         // Create test books
-        Book book1 = new Book();
-        book1.setId("1");
-        Book book2 = new Book();
-        book2.setId("2");
-        Book book3 = new Book();
+        Book book3 = new Book("3333333333", "Test Book 3", "Description 3",
+                "Author 3", "Publisher 3", "url3", 39.99, 15);
         book3.setId("3");
 
         // Create purchase histories
-        Checkout user1Checkout = new Checkout();
-        user1Checkout.setUser(user1);
-        user1Checkout.setItems(Arrays.asList(
-                new PurchaseItem(book1, 1, null),
-                new PurchaseItem(book2, 1, null)
-        ));
+        PurchaseItem item1 = new PurchaseItem(book1, 1, null);
+        PurchaseItem item2 = new PurchaseItem(book2, 1, null);
+        PurchaseItem item3 = new PurchaseItem(book3, 1, null);
 
-        Checkout user2Checkout = new Checkout();
-        user2Checkout.setUser(user2);
-        user2Checkout.setItems(Arrays.asList(
-                new PurchaseItem(book2, 1, null),
-                new PurchaseItem(book3, 1, null)
-        ));
+        // Setup checkouts
+        Checkout customerCheckout = new Checkout(customer);
+        customerCheckout.addItem(item1);
+        customerCheckout.addItem(item2);
 
-        // Mock authentication
-        when(authentication.getName()).thenReturn("user1");
-        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(user1));
+        User similarUser = new User("similar", Role.CUSTOMER);
+        similarUser.setId("3");
+        Checkout similarUserCheckout = new Checkout(similarUser);
+        similarUserCheckout.addItem(item2);
+        similarUserCheckout.addItem(item3);
 
         // Mock repository calls
-        when(checkoutRepository.findByUser(user1)).thenReturn(Arrays.asList(user1Checkout));
-        when(userRepository.findAll()).thenReturn(Arrays.asList(user1, user2));
-        when(checkoutRepository.findByUser(user2)).thenReturn(Arrays.asList(user2Checkout));
-        when(bookRepository.findAllById(any())).thenReturn(Arrays.asList(book3));
+        when(userRepository.findByUsername(customer.getUsername())).thenReturn(Optional.of(customer));
+        when(checkoutRepository.findByUserId(customer.getId())).thenReturn(Collections.singletonList(customerCheckout));
+        when(userRepository.findAll()).thenReturn(Arrays.asList(customer, similarUser));
+        when(checkoutRepository.findByUserId(similarUser.getId())).thenReturn(Collections.singletonList(similarUserCheckout));
+        when(bookRepository.findAllById(any())).thenReturn(Collections.singletonList(book3));
 
-        // Test recommendation endpoint
-        ResponseEntity<List<Book>> response = bookController.getRecommendedBooks(authentication);
+        ResponseEntity<List<Book>> response = bookController.getRecommendedBooks(principal);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -275,52 +271,40 @@ public class BookControllerTest {
         assertEquals(book3.getId(), response.getBody().get(0).getId());
     }
 
-    /**
-     * Tests getting recommendations when user has no purchase history
-     */
     @Test
     void testGetRecommendationsWithNoPurchaseHistory() {
-        User user = new User("user", Role.CUSTOMER);
-        when(authentication.getName()).thenReturn("user");
-        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
-        when(checkoutRepository.findByUser(user)).thenReturn(new ArrayList<>());
+        when(userRepository.findByUsername(customer.getUsername())).thenReturn(Optional.of(customer));
+        when(checkoutRepository.findByUserId(customer.getId())).thenReturn(new ArrayList<>());
 
-        ResponseEntity<List<Book>> response = bookController.getRecommendedBooks(authentication);
+        ResponseEntity<List<Book>> response = bookController.getRecommendedBooks(principal);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue(Objects.requireNonNull(response.getBody()).isEmpty());
     }
 
-    /**
-     * Tests getting recommendations when no similar users exist
-     */
     @Test
     void testGetRecommendationsWithNoSimilarUsers() {
-        User user = new User("user", Role.CUSTOMER);
-        Checkout checkout = new Checkout();
-        checkout.setUser(user);
-        checkout.setItems(List.of(new PurchaseItem(book1, 1, null)));
+        // Setup checkout with only one book
+        PurchaseItem item1 = new PurchaseItem(book1, 1, null);
+        Checkout checkout = new Checkout(customer);
+        checkout.addItem(item1);
 
-        when(authentication.getName()).thenReturn("user");
-        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
-        when(checkoutRepository.findByUser(user)).thenReturn(List.of(checkout));
-        when(userRepository.findAll()).thenReturn(List.of(user));
+        when(userRepository.findByUsername(customer.getUsername())).thenReturn(Optional.of(customer));
+        when(checkoutRepository.findByUserId(customer.getId())).thenReturn(Collections.singletonList(checkout));
+        when(userRepository.findAll()).thenReturn(Collections.singletonList(customer));
 
-        ResponseEntity<List<Book>> response = bookController.getRecommendedBooks(authentication);
+        ResponseEntity<List<Book>> response = bookController.getRecommendedBooks(principal);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue(Objects.requireNonNull(response.getBody()).isEmpty());
     }
 
-    /**
-     * Tests getting recommendations with invalid user
-     */
     @Test
     void testGetRecommendationsWithInvalidUser() {
-        when(authentication.getName()).thenReturn("nonexistent");
+        when(principal.getName()).thenReturn("nonexistent");
         when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
 
         assertThrows(RuntimeException.class, () ->
-                bookController.getRecommendedBooks(authentication));
+                bookController.getRecommendedBooks(principal));
     }
 }

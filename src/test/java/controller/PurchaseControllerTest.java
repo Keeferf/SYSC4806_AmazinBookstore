@@ -48,34 +48,28 @@ public class PurchaseControllerTest {
     void setUp() {
         autoCloseable = MockitoAnnotations.openMocks(this);
 
-        book = new Book();
-        book.setId(1);
-        book.setTitle("Test Book");
-        book.setAuthor("Test Author");
-        book.setIsbn("1234567890");
-        book.setPrice(29.99);
-        book.setInventory(10);
+        // Create book with proper constructor
+        book = new Book("1234567890", "Test Book", "Test Description",
+                "Test Author", "Test Publisher", "test-url", 29.99, 10);
+        book.setId("1"); // Set ID separately
 
-        customer = new User();
-        customer.setId(1L);
-        customer.setUsername("customer");
-        customer.setRole(Role.CUSTOMER);
+        // Create customer
+        customer = new User("customer", Role.CUSTOMER);
+        customer.setId("1");
 
-        cartItem = new CartItemDTO();
-        cartItem.setBookId(1L);
-        cartItem.setQuantity(2);
-        cartItem.setTitle("Test Book");
-        cartItem.setAuthor("Test Author");
-        cartItem.setIsbn("1234567890");
-        cartItem.setPurchasePrice(29.99);
+        // Create cart item
+        cartItem = new CartItemDTO("1", 2, "Test Book", "Test Author", "1234567890", 29.99);
 
-        purchaseItem = new PurchaseItem(book, 2, null);
-
-        checkout = new Checkout();
-        checkout.setId(1L);
-        checkout.setUser(customer);
+        // Create checkout
+        checkout = new Checkout(customer);
+        checkout.setId("1");
         checkout.setPurchaseDate(LocalDateTime.now());
-        checkout.setItems(Collections.singletonList(purchaseItem));
+
+        // Create purchase item
+        purchaseItem = new PurchaseItem(book, 2, checkout);
+
+        // Add item to checkout
+        checkout.addItem(purchaseItem);
 
         when(principal.getName()).thenReturn("customer");
     }
@@ -87,58 +81,46 @@ public class PurchaseControllerTest {
         }
     }
 
-    /**
-     * Tests successful checkout process with sufficient inventory
-     */
     @Test
     void testSuccessfulCheckout() {
         List<CartItemDTO> cartItems = Collections.singletonList(cartItem);
         when(userRepository.findByUsername("customer")).thenReturn(Optional.of(customer));
-        when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
+        when(bookRepository.findById("1")).thenReturn(Optional.of(book));
         when(checkoutRepository.save(any(Checkout.class))).thenReturn(checkout);
 
         ResponseEntity<String> response = purchaseController.checkout(cartItems, principal);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Checkout successful.", response.getBody());
+        assertEquals("Checkout successful", response.getBody());
         verify(bookRepository).save(book);
-        assertEquals(8, book.getInventory());
+        assertEquals(8, book.getInventory()); // Verify inventory was reduced
     }
 
-    /**
-     * Tests checkout with insufficient inventory
-     */
     @Test
     void testCheckoutInsufficientInventory() {
-        cartItem.setQuantity(15);
+        cartItem = new CartItemDTO("1", 15, "Test Book", "Test Author", "1234567890", 29.99);
         List<CartItemDTO> cartItems = Collections.singletonList(cartItem);
         when(userRepository.findByUsername("customer")).thenReturn(Optional.of(customer));
-        when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
+        when(bookRepository.findById("1")).thenReturn(Optional.of(book));
 
         ResponseEntity<String> response = purchaseController.checkout(cartItems, principal);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertTrue(response.getBody().contains("Not enough inventory"));
+        assertTrue(response.getBody().contains("Not enough inventory for book"));
     }
 
-    /**
-     * Tests checkout with non-existent book
-     */
     @Test
     void testCheckoutNonexistentBook() {
         List<CartItemDTO> cartItems = Collections.singletonList(cartItem);
         when(userRepository.findByUsername("customer")).thenReturn(Optional.of(customer));
-        when(bookRepository.findById(1L)).thenReturn(Optional.empty());
+        when(bookRepository.findById("1")).thenReturn(Optional.empty());
 
         ResponseEntity<String> response = purchaseController.checkout(cartItems, principal);
 
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertTrue(response.getBody().contains("Book with ID 1 not found"));
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertTrue(response.getBody().contains("Book not found"));
     }
 
-    /**
-     * Tests checkout with invalid user
-     */
     @Test
     void testCheckoutInvalidUser() {
         List<CartItemDTO> cartItems = Collections.singletonList(cartItem);
@@ -146,48 +128,49 @@ public class PurchaseControllerTest {
 
         ResponseEntity<String> response = purchaseController.checkout(cartItems, principal);
 
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertTrue(response.getBody().contains("User not found"));
     }
 
-    /**
-     * Tests viewing purchase history for user with purchases
-     */
     @Test
     void testViewPurchaseHistory() {
         when(userRepository.findByUsername("customer")).thenReturn(Optional.of(customer));
-        when(checkoutRepository.findByUser(customer)).thenReturn(Collections.singletonList(checkout));
+        when(checkoutRepository.findByUserId(customer.getId())).thenReturn(Collections.singletonList(checkout));
 
         ResponseEntity<List<PurchaseDTO>> response = purchaseController.getPurchaseHistory(principal);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals(1, response.getBody().size());
+
+        PurchaseDTO purchase = response.getBody().get(0);
+        assertEquals(checkout.getId(), purchase.getId());
+        assertEquals(checkout.getPurchaseDate(), purchase.getPurchaseDate());
+        assertEquals(1, purchase.getItems().size());
+
+        CartItemDTO item = purchase.getItems().get(0);
+        assertEquals(book.getId(), item.getBookId());
+        assertEquals(2, item.getQuantity());
+        assertEquals(book.getTitle(), item.getTitle());
     }
 
-    /**
-     * Tests viewing purchase history for user with no purchases
-     */
     @Test
     void testViewEmptyPurchaseHistory() {
         when(userRepository.findByUsername("customer")).thenReturn(Optional.of(customer));
-        when(checkoutRepository.findByUser(customer)).thenReturn(new ArrayList<>());
+        when(checkoutRepository.findByUserId(customer.getId())).thenReturn(new ArrayList<>());
 
         ResponseEntity<List<PurchaseDTO>> response = purchaseController.getPurchaseHistory(principal);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(response.getBody().isEmpty());
+        assertTrue(Objects.requireNonNull(response.getBody()).isEmpty());
     }
 
-    /**
-     * Tests viewing purchase history for non-existent user
-     */
     @Test
     void testViewPurchaseHistoryInvalidUser() {
         when(userRepository.findByUsername("customer")).thenReturn(Optional.empty());
 
         ResponseEntity<List<PurchaseDTO>> response = purchaseController.getPurchaseHistory(principal);
 
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     }
 }

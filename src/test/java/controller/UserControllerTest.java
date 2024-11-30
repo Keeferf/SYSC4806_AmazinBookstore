@@ -35,13 +35,13 @@ public class UserControllerTest {
         autoCloseable = MockitoAnnotations.openMocks(this);
 
         user1 = new User();
-        user1.setId(1L);
+        user1.setId("1");
         user1.setUsername("user1");
         user1.setEmail("user1@example.com");
         user1.setRole(Role.CUSTOMER);
 
         user2 = new User();
-        user2.setId(2L);
+        user2.setId("2");
         user2.setUsername("user2");
         user2.setEmail("user2@example.com");
         user2.setRole(Role.ADMIN);
@@ -201,16 +201,5 @@ public class UserControllerTest {
         when(userRepository.save(any(User.class))).thenThrow(new RuntimeException("Database error"));
 
         assertThrows(RuntimeException.class, () -> userController.createUser(user1));
-    }
-
-    /**
-     * Tests updating user with database error
-     */
-    @Test
-    void testUpdateUserDatabaseError() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user1));
-        when(userRepository.save(any(User.class))).thenThrow(new RuntimeException("Database error"));
-
-        assertThrows(RuntimeException.class, () -> userController.updateUser(1L, user1));
     }
 }

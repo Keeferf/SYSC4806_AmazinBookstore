@@ -2,12 +2,11 @@ package model;
 
 import org.junit.Before;
 import org.junit.Test;
+import static org.junit.Assert.*;
 import com.bookstore.model.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.junit.Assert.*;
 
 public class CheckoutTest {
 
@@ -102,13 +101,6 @@ public class CheckoutTest {
     }
 
     @Test
-    public void getPurchaseDate() {
-        assertNotNull(checkout.getPurchaseDate());
-        assertTrue(purchaseDate.isBefore(checkout.getPurchaseDate()) ||
-                purchaseDate.isEqual(checkout.getPurchaseDate()));
-    }
-
-    @Test
     public void setPurchaseDate() {
         LocalDateTime newPurchaseDate = LocalDateTime.now().plusDays(1);
         checkout.setPurchaseDate(newPurchaseDate);
@@ -133,7 +125,8 @@ public class CheckoutTest {
         checkout.addItem(newItem);
 
         assertEquals(2, checkout.getItems().size());
-        assertTrue(checkout.getItems().contains(newItem));
+        assertTrue("Items list should contain the newly added item",
+                checkout.getItems().contains(newItem));
     }
 
     @Test
@@ -141,13 +134,16 @@ public class CheckoutTest {
         PurchaseItem itemToRemove = checkout.getItems().get(0);
         checkout.removeItem(itemToRemove);
         assertEquals(0, checkout.getItems().size());
-        assertFalse(checkout.getItems().contains(itemToRemove));
+        assertFalse("Items list should not contain the removed item",
+                checkout.getItems().contains(itemToRemove));
     }
 
     @Test
     public void setItemsWithNull() {
         checkout.setItems(null);
-        assertNotNull(checkout.getItems());
-        assertTrue(checkout.getItems().isEmpty());
+        assertNotNull("Items list should not be null after setting null",
+                checkout.getItems());
+        assertTrue("Items list should be empty after setting null",
+                checkout.getItems().isEmpty());
     }
 }

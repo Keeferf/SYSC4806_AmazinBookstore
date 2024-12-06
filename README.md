@@ -1,6 +1,8 @@
 # AmazinBookstore
 ## Build Status
-[![Java CI with Maven](https://github.com/jaydonhaghighi/SYSC4806_AmazinBookstore/actions/workflows/maven.yml/badge.svg)](https://github.com/jaydonhaghighi/SYSC4806_AmazinBookstore/actions/workflows/maven.yml)
+[![Java CI with Maven](https://github.com/keeferf/SYSC4806_AmazinBookstore/actions/workflows/maven.yml/badge.svg)](https://github.com/keeferf/SYSC4806_AmazinBookstore/actions/workflows/maven.yml)
+[![Main AmazinBookstore Application CI](https://github.com/keeferf/SYSC4806_AmazinBookstore/actions/workflows/main_amazinbookstoreapplication.yml/badge.svg)](https://github.com/keeferf/SYSC4806_AmazinBookstore/actions/workflows/main_amazinbookstoreapplication.yml)
+
 ## Project Overview
 AmazinBookstore is an online bookstore management system that allows users to browse, search for books, and manage their shopping cart for purchasing. The system also provides functionality for bookstore owners to upload and edit book information.
 
@@ -51,4 +53,4 @@ The following is the current schema of the database used in the AmazinBookstore 
 
 ## UML Diagram
 The following is the current UML diagram used in the AmazinBookstore project:
-![UML Diagram Miletone 3.png](Diagrams/UML%20Diagram%20Milestone%203.png)
+![UML Diagram Milestone 3.png](Diagrams/UML%20Diagram%20Milestone%203.png)

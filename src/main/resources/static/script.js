@@ -1471,20 +1471,28 @@ function showCheckoutSuccess() {
  */
 function viewPurchaseHistory() {
     const content = document.getElementById('content');
-    content.innerHTML = '<h2>Purchase History</h2>';
+    content.innerHTML = `
+        <div class="purchase-history-container">
+            <h2>Purchase History</h2>
+            <div id="purchaseRecords">
+                <div class="loading">Loading purchase history...</div>
+            </div>
+        </div>
+    `;
 
     const token = getAuthToken();
     if (!token) {
-        content.innerHTML += `
-            <div class="empty-history">
-                <p>Please log in to view your purchase history.</p>
-                <button onclick="showHome()">Return to Home</button>
+        content.innerHTML = `
+            <div class="purchase-history-container">
+                <h2>Purchase History</h2>
+                <div class="empty-history">
+                    <p>Please log in to view your purchase history.</p>
+                    <button onclick="showHome()">Return to Home</button>
+                </div>
             </div>
         `;
         return;
     }
-
-    content.innerHTML += '<div class="loading-spinner">Loading purchase history...</div>';
 
     fetch(`${apiUrl}/purchase/history`, {
         headers: {
@@ -1500,29 +1508,24 @@ function viewPurchaseHistory() {
             return response.json();
         })
         .then(purchases => {
-            content.innerHTML = '<h2>Purchase History</h2>';
+            const purchaseRecords = document.getElementById('purchaseRecords');
 
             if (!purchases || purchases.length === 0) {
-                content.innerHTML += `
-                <div class="empty-history">
-                    <p>No purchase history found.</p>
-                    <button onclick="showHome()">Start Shopping</button>
-                </div>
-            `;
+                purchaseRecords.innerHTML = `
+                    <div class="empty-history">
+                        <p>No purchase history found.</p>
+                        <button onclick="showHome()">Start Shopping</button>
+                    </div>
+                `;
                 return;
             }
 
-            const historyContainer = document.createElement('div');
-            historyContainer.className = 'purchase-history-container';
-
+            // Sort purchases by date (newest first)
             const sortedPurchases = purchases.sort((a, b) =>
                 new Date(b.purchaseDate) - new Date(a.purchaseDate)
             );
 
-            sortedPurchases.forEach(purchase => {
-                const purchaseDiv = document.createElement('div');
-                purchaseDiv.className = 'purchase-record';
-
+            purchaseRecords.innerHTML = sortedPurchases.map(purchase => {
                 let totalItems = 0;
                 let totalCost = 0;
 
@@ -1530,48 +1533,88 @@ function viewPurchaseHistory() {
                     const quantity = item.quantity || 0;
                     const price = item.purchasePrice || 0;
                     const itemTotal = price * quantity;
-
                     totalItems += quantity;
                     totalCost += itemTotal;
 
+                    // Get the book image URL
+                    let imageUrl;
+                    if (item.bookId) {
+                        // Fetch the current book data to get the image
+                        fetch(`${apiUrl}/books/${item.bookId}`)
+                            .then(response => response.json())
+                            .then(book => {
+                                const imgElement = document.querySelector(`#book-img-${item.bookId}`);
+                                if (imgElement) {
+                                    imgElement.src = book.imageName ? `/api/books/image/${book.imageName}` : '/api/placeholder/80/120';
+                                }
+                            })
+                            .catch(() => {
+                                // If fetch fails, keep the placeholder
+                                console.log('Failed to fetch book image');
+                            });
+                    }
+                    // Start with placeholder while we fetch the actual image
+                    imageUrl = '/api/placeholder/80/120';
+
                     return `
-                    <div class="purchase-item">
-                        <h4>${item.title}</h4>
-                        <p><strong>Author:</strong> ${item.author}</p>
-                        <p><strong>ISBN:</strong> ${item.isbn}</p>
-                        <p><strong>Quantity:</strong> ${quantity}</p>
-                        <p><strong>Price:</strong> $${price.toFixed(2)}</p>
-                        <p><strong>Total:</strong> $${itemTotal.toFixed(2)}</p>
-                    </div>
-                `;
+                        <div class="purchase-item">
+                            <div class="purchase-item-image">
+                                <img id="book-img-${item.bookId}" 
+                                     src="${imageUrl}" 
+                                     alt="${item.title}"
+                                     loading="lazy">
+                            </div>
+                            <div class="purchase-item-details">
+                                <h3 class="purchase-item-title">${item.title}</h3>
+                                <p class="purchase-item-author">by ${item.author}</p>
+                                <p class="purchase-item-isbn">ISBN: ${item.isbn}</p>
+                            </div>
+                            <div class="purchase-item-price">
+                                <div class="price-details">
+                                    <p>Quantity: ${quantity}</p>
+                                    <p>Price: $${price.toFixed(2)}</p>
+                                </div>
+                                <p class="total-price">Total: $${itemTotal.toFixed(2)}</p>
+                            </div>
+                        </div>
+                    `;
                 }).join('');
 
-                purchaseDiv.innerHTML = `
-                <div class="purchase-header">
-                    <h3>Purchase Date: ${new Date(purchase.purchaseDate).toLocaleString()}</h3>
-                    <div class="purchase-summary">
-                        <p><strong>Total Items:</strong> ${totalItems}</p>
-                        <p><strong>Total Cost:</strong> $${totalCost.toFixed(2)}</p>
+                return `
+                    <div class="purchase-record">
+                        <div class="purchase-header">
+                            <div class="purchase-date">
+                                ${new Date(purchase.purchaseDate).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })}
+                            </div>
+                            <div class="purchase-summary">
+                                <p>Items: ${totalItems}</p>
+                                <p>Total: $${totalCost.toFixed(2)}</p>
+                            </div>
+                        </div>
+                        <div class="purchase-items">
+                            ${itemsList}
+                        </div>
                     </div>
-                </div>
-                <div class="purchase-items">
-                    ${itemsList}
-                </div>
-            `;
-
-                historyContainer.appendChild(purchaseDiv);
-            });
-
-            content.appendChild(historyContainer);
+                `;
+            }).join('');
         })
         .catch(error => {
             console.error('Error fetching purchase history:', error);
             content.innerHTML = `
-            <h2>Purchase History</h2>
-            <div class="error-message">
-                <p>${error.message || 'An error occurred while loading purchase history.'}</p>
-                <button onclick="showHome()">Return to Home</button>
-            </div>
-        `;
+                <div class="purchase-history-container">
+                    <h2>Purchase History</h2>
+                    <div class="error-message">
+                        <p>${error.message || 'An error occurred while loading purchase history.'}</p>
+                        <button onclick="showHome()">Return to Home</button>
+                    </div>
+                </div>
+            `;
         });
 }

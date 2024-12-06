@@ -2,18 +2,33 @@
    CSS Variables
    =============================== */
 :root {
+    /* Base measurements */
     --ruler: 16px;
+
+    /* Colors */
     --white: #feeeee;
     --color-bg: #272727;
     --color-shadow: #141414;
     --color-light: #383838;
     --color-text: #ffffff;
+
+    /* Common box shadows */
+    --shadow-outer: 6px 6px 12px var(--color-shadow), -6px -6px 12px var(--color-light);
+    --shadow-inner: inset 2px 2px 5px var(--color-shadow), inset -5px -5px 10px var(--color-light);
+    --shadow-button: -5px -5px 20px var(--color-light), 5px 5px 20px var(--color-shadow);
+    --shadow-button-hover: -2px -2px 5px var(--color-light), 2px 2px 5px var(--color-shadow);
+    --shadow-button-active: inset 1px 1px 2px var(--color-shadow), inset -1px -1px 2px var(--color-light);
+
+    /* Common border radius */
+    --border-radius: 12px;
+    --border-radius-sm: 8px;
 }
 
 /* ===============================
    Base Styles
    =============================== */
-body, html {
+body,
+html {
     background-color: var(--color-bg);
     font-family: 'Montserrat', sans-serif;
     margin: 0;
@@ -26,13 +41,76 @@ h1 {
     cursor: pointer;
 }
 
-input, select, textarea {
+/* Form element base styles */
+input,
+select,
+textarea {
     font-family: 'Montserrat', sans-serif;
     font-size: var(--ruler);
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    background-color: var(--color-bg);
+    border: none;
+    border-radius: var(--border-radius);
+    color: var(--white);
+    box-shadow: var(--shadow-inner);
+    outline: none;
+    transition: all 0.3s ease;
 }
 
 input::placeholder {
     color: var(--white);
+    opacity: 0.5;
+}
+
+/* Focus states */
+input:focus,
+select:focus,
+textarea:focus {
+    box-shadow: inset 4px 4px 8px var(--color-shadow),
+    inset -8px -8px 16px var(--color-light);
+}
+
+/* Disabled states */
+input:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    box-shadow: inset 1px 1px 2px var(--color-shadow),
+    inset -2px -2px 4px var(--color-light);
+}
+
+/* Button base styles */
+button {
+    background-color: var(--color-bg);
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 10px 20px;
+    font-size: 16px;
+    color: var(--white);
+    cursor: pointer;
+    outline: none;
+    transition: box-shadow 0.2s ease-in-out;
+    box-shadow: var(--shadow-button);
+    margin: 5px;
+}
+
+button:hover {
+    box-shadow: var(--shadow-button-hover);
+}
+
+button:active {
+    box-shadow: var(--shadow-button-active);
+}
+
+/* Common animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
 }
 
 /* ===============================
@@ -49,10 +127,9 @@ input::placeholder {
 .auth-welcome {
     background-color: var(--color-bg);
     padding: 40px;
-    border-radius: 12px;
+    border-radius: var(--border-radius);
     text-align: center;
-    box-shadow: 6px 6px 12px var(--color-shadow),
-    -6px -6px 12px var(--color-light);
+    box-shadow: var(--shadow-outer);
 }
 
 .auth-welcome h1 {
@@ -85,7 +162,7 @@ input::placeholder {
 header {
     background-color: var(--color-bg);
     padding: 20px;
-    box-shadow: 6px 6px 12px var(--color-shadow), -6px -6px 12px var(--color-light);
+    box-shadow: var(--shadow-outer);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -95,6 +172,20 @@ header {
 #searchContainer {
     display: flex;
     align-items: center;
+}
+
+#searchContainer select,
+#searchContainer input {
+    margin-left: 10px;
+    padding: 10px;
+    border: none;
+    border-radius: var(--border-radius);
+    background-color: var(--color-bg);
+    color: var(--white);
+    box-shadow: var(--shadow-inner);
+    outline: none;
+    transition: all 0.2s ease-in-out;
+    max-width: 200px;
 }
 
 /* User Menu Styles */
@@ -114,18 +205,15 @@ header {
     background-color: var(--color-bg);
     border: none;
     cursor: pointer;
-    box-shadow: -2px -2px 5px var(--color-light),
-    2px 2px 5px var(--color-shadow);
+    box-shadow: var(--shadow-button-hover);
 }
 
 .user-menu-btn:hover {
-    box-shadow: -1px -1px 3px var(--color-light),
-    1px 1px 3px var(--color-shadow);
+    box-shadow: var(--shadow-button-hover);
 }
 
 .user-menu-btn:active {
-    box-shadow: inset 1px 1px 2px var(--color-shadow),
-    inset -1px -1px 2px var(--color-light);
+    box-shadow: var(--shadow-button-active);
 }
 
 .user-initial {
@@ -135,6 +223,7 @@ header {
     text-transform: uppercase;
 }
 
+/* User Dropdown */
 .user-dropdown {
     display: none;
     position: absolute;
@@ -142,15 +231,15 @@ header {
     top: 50px;
     min-width: 200px;
     background-color: var(--color-bg);
-    border-radius: 12px;
-    box-shadow: 6px 6px 12px var(--color-shadow),
-    -6px -6px 12px var(--color-light);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-outer);
     z-index: 1000;
     padding: 10px 0;
 }
 
 .user-dropdown.show {
     display: block;
+    animation: slideDown 0.2s ease-out;
 }
 
 .user-info {
@@ -182,10 +271,8 @@ header {
 
 .dropdown-item:hover {
     background-color: var(--color-light);
-    box-shadow: none;
 }
 
-/* Animation for dropdown */
 @keyframes slideDown {
     from {
         opacity: 0;
@@ -197,27 +284,6 @@ header {
     }
 }
 
-.user-dropdown.show {
-    animation: slideDown 0.2s ease-out;
-}
-
-#searchContainer select,
-#searchContainer input {
-    margin-left: 10px;
-    padding: 10px;
-    border: none;
-    border-radius: 12px;
-    background-color: var(--color-bg);
-    color: var(--white);
-    box-shadow: inset 2px 2px 5px var(--color-shadow), inset -5px -5px 10px var(--color-light);
-    outline: none;
-    transition: all 0.2s ease-in-out;
-}
-
-#searchContainer input::placeholder {
-    color: var(--white);
-}
-
 /* Customer Actions */
 #customerActions {
     display: flex;
@@ -225,247 +291,7 @@ header {
     align-items: center;
 }
 
-/* ===============================
-   Main Content
-   =============================== */
-#mainContent {
-    min-height: 100vh;
-    background-color: var(--color-bg);
-}
-
-#content {
-    padding: 20px;
-}
-
-/* Book Display */
-.book {
-    background-color: var(--color-bg);
-    padding: 20px;
-    margin-bottom: 20px;
-    border-radius: 12px;
-    box-shadow: 6px 6px 12px var(--color-shadow), -6px -6px 12px var(--color-light);
-}
-
-.book h2 {
-    margin: 0;
-    color: var(--white);
-}
-
-.book p {
-    margin: 10px 0;
-    color: var(--white);
-}
-
-/* ===============================
-   Forms & Inputs
-   =============================== */
-form label {
-    display: block;
-    margin-bottom: 15px;
-    color: var(--white);
-}
-
-form input, form textarea {
-    width: 100%;
-    box-sizing: border-box;
-}
-
-/* ===============================
-   Buttons
-   =============================== */
-button {
-    background-color: var(--color-bg);
-    border: none;
-    border-radius: 12px;
-    padding: 10px 20px;
-    font-size: 16px;
-    color: var(--white);
-    cursor: pointer;
-    outline: none;
-    transition: box-shadow 0.2s ease-in-out;
-    box-shadow: -5px -5px 20px var(--color-light), 5px 5px 20px var(--color-shadow);
-    margin: 5px;
-}
-
-button:hover {
-    box-shadow: -2px -2px 5px var(--color-light), 2px 2px 5px var(--color-shadow);
-}
-
-button:active {
-    box-shadow: inset 1px 1px 2px var(--color-shadow), inset -1px -1px 2px var(--color-light);
-}
-
-button.addToCartBtn {
-    margin-top: 10px;
-}
-
-/* Authentication Buttons */
-.auth-buttons button {
-    background-color: var(--color-bg);
-    color: var(--color-text);
-    padding: 10px 20px;
-    border: none;
-    border-radius: 12px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: box-shadow 0.2s ease-in-out;
-    box-shadow: -4px -4px 10px var(--color-light), 4px 4px 10px var(--color-shadow);
-    margin-left: 10px;
-}
-
-.auth-buttons button:hover {
-    box-shadow: -2px -2px 5px var(--color-light), 2px 2px 5px var(--color-shadow);
-}
-
-.auth-buttons button:active {
-    box-shadow: inset 1px 1px 2px var(--color-shadow), inset -1px -1px 2px var(--color-light);
-}
-
-/* ===============================
-   Modal Styles
-   =============================== */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 100;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.6);
-}
-
-.modal-content {
-    background-color: var(--color-bg);
-    margin: 10% auto;
-    padding: 30px;
-    width: 400px;
-    max-width: 90%;
-    border-radius: 12px;
-    box-shadow: 6px 6px 12px var(--color-shadow), -6px -6px 12px var(--color-light);
-    color: var(--color-text);
-    text-align: center;
-}
-
-.modal-content input {
-    background-color: var(--color-bg);
-    border: none;
-    margin: 10px 0;
-    padding: 12px;
-    width: 100%;
-    border-radius: 8px;
-    color: var(--white);
-    box-shadow: inset 2px 2px 5px var(--color-shadow),
-    inset -5px -5px 10px var(--color-light);
-}
-
-.modal-content input::placeholder {
-    color: var(--white);
-    opacity: 0.7;
-}
-
-.modal-content button {
-    width: 100%;
-    margin-top: 20px;
-    padding: 12px;
-    font-size: 1.1em;
-}
-
-.close {
-    color: var(--white);
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.close:hover,
-.close:focus {
-    color: var(--color-light);
-    text-decoration: none;
-}
-
-/* ===============================
-   Purchase History
-   =============================== */
-.purchase-record {
-    background-color: var(--color-bg);
-    margin-bottom: 20px;
-    padding: 15px;
-    border-radius: 12px;
-    box-shadow: 6px 6px 12px var(--color-shadow), -6px -6px 12px var(--color-light);
-}
-
-.purchase-header {
-    background-color: var(--color-bg);
-    padding: 15px;
-    margin-bottom: 15px;
-    border-radius: 8px;
-    box-shadow: inset 2px 2px 5px var(--color-shadow), inset -5px -5px 10px var(--color-light);
-}
-
-.purchase-header h3 {
-    margin: 0;
-    color: var(--white);
-}
-
-.purchase-items {
-    display: grid;
-    gap: 15px;
-    padding: 10px;
-}
-
-.purchase-item {
-    background-color: var(--color-bg);
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: inset 2px 2px 5px var(--color-shadow), inset -5px -5px 10px var(--color-light);
-}
-
-.purchase-item p {
-    margin: 8px 0;
-    color: var(--white);
-}
-
-hr {
-    margin: 20px 0;
-    border: none;
-    border-top: 1px solid var(--color-light);
-    opacity: 0.3;
-}
-
-/* ===============================
-   Login Status
-   =============================== */
-#loginStatus {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-#statusMessage {
-    color: var(--white);
-}
-
-/* Hide auth buttons in header when showing welcome screen */
-#mainContent .auth-buttons {
-    display: none;
-}
-
-/* Animation */
-.fade-in {
-    animation: fadeIn 0.3s ease-in;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-/* ===============================
-   Media Queries
-   =============================== */
+/* Responsive adjustments */
 @media (max-width: 768px) {
     header {
         flex-direction: column;
@@ -482,6 +308,7 @@ hr {
     #searchContainer button {
         margin: 5px 0;
         width: 100%;
+        max-width: none;
     }
 
     #customerActions {
@@ -498,143 +325,19 @@ hr {
     .welcome-buttons {
         flex-direction: column;
     }
-
-    .modal-content {
-        margin: 10% auto;
-        width: 90%;
-        padding: 20px;
-    }
 }
 
 /* ===============================
-   Form & Input Base Styles
+   Main Content
    =============================== */
-input,
-select,
-textarea {
-    font-family: 'Montserrat', sans-serif;
-    font-size: var(--ruler);
-    width: 100%;
-    padding: 12px;
-    margin: 8px 0;
+#mainContent {
+    min-height: 100vh;
     background-color: var(--color-bg);
-    border: none;
-    border-radius: 12px;
-    color: var(--white);
-    box-shadow: inset 2px 2px 5px var(--color-shadow),
-    inset -5px -5px 10px var(--color-light);
-    outline: none;
-    transition: all 0.3s ease;
 }
 
-input:focus,
-select:focus,
-textarea:focus {
-    box-shadow: inset 4px 4px 8px var(--color-shadow),
-    inset -8px -8px 16px var(--color-light);
+#content {
+    padding: 20px;
 }
-
-input::placeholder,
-textarea::placeholder {
-    color: var(--white);
-    opacity: 0.5;
-}
-
-/* Disabled input styles */
-input:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    box-shadow: inset 1px 1px 2px var(--color-shadow),
-    inset -2px -2px 4px var(--color-light);
-}
-
-/* Select dropdown styles */
-select {
-    appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 1rem center;
-    background-size: 1em;
-    padding-right: 2.5rem;
-}
-
-select:invalid {
-    color: var(--white);
-    opacity: 0.5;
-}
-
-/* Checkbox and Radio button styles */
-input[type="checkbox"],
-input[type="radio"] {
-    width: auto;
-    margin-right: 10px;
-    box-shadow: none;
-}
-
-/* Modal form styles */
-.modal-content input {
-    background-color: var(--color-bg);
-    margin: 10px 0;
-    width: 100%;
-}
-
-/* Search input specific styles */
-#searchContainer input,
-#searchContainer select {
-    margin: 5px;
-    max-width: 200px;
-}
-
-/* Form group spacing */
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    color: var(--white);
-    font-size: 0.9em;
-    font-weight: 500;
-}
-
-/* Edit profile form specific styles */
-.edit-profile-container input {
-    margin: 8px 0 16px 0;
-}
-
-/* ===============================
-   Login/Register Form Styles
-   =============================== */
-.auth-form input {
-    margin-bottom: 15px;
-}
-
-/* Remove browser autofill background */
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 30px var(--color-bg) inset !important;
-    -webkit-text-fill-color: var(--white) !important;
-    transition: background-color 5000s ease-in-out 0s;
-}
-
-/* Error state for inputs */
-input.error {
-    box-shadow: inset 2px 2px 5px rgba(255, 0, 0, 0.2),
-    inset -5px -5px 10px var(--color-light);
-}
-
-/* Success state for inputs */
-input.success {
-    box-shadow: inset 2px 2px 5px rgba(0, 255, 0, 0.1),
-    inset -5px -5px 10px var(--color-light);
-}
-
-/* ===============================
-   Button Styles
-   =============================== */
 
 /* Book Layout Container */
 .bookshelf-container {
@@ -652,24 +355,23 @@ input.success {
     scroll-behavior: smooth;
     padding: 20px 40px;
     -ms-overflow-style: none;  /* Hide scrollbar IE and Edge */
-    scrollbar-width: none;  /* Hide scrollbar Firefox */
+    scrollbar-width: none;     /* Hide scrollbar Firefox */
 }
 
 .books-row::-webkit-scrollbar {
     display: none;
 }
 
-/* Individual Book Tiles */
+/* Book Tiles */
 .book {
     flex: 0 0 200px;
     background-color: var(--color-bg);
-    border-radius: 12px;
-    box-shadow: 6px 6px 12px var(--color-shadow), -6px -6px 12px var(--color-light);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-outer);
     transition: transform 0.2s ease;
     cursor: pointer;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    padding: 15px;
 }
 
 .book:hover {
@@ -679,12 +381,18 @@ input.success {
 .book-content {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    text-align: center;
     height: 100%;
+    gap: 10px;
 }
 
 .book-image {
     width: 100%;
     aspect-ratio: 3/4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     overflow: hidden;
 }
 
@@ -692,30 +400,30 @@ input.success {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
-    background-color: var(--color-bg);
+    border-radius: var(--border-radius-sm);
 }
 
 .book h2 {
     font-size: 1em;
-    margin: 8px;
+    margin: 0;
+    padding: 0 5px;
     color: var(--white);
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+    width: 100%;
 }
 
 .book .author {
-    margin: 0 8px 8px 8px;
+    margin: 0;
     color: var(--white);
     opacity: 0.8;
     font-size: 0.9em;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    width: 100%;
 }
 
 /* Scroll Buttons */
@@ -727,7 +435,7 @@ input.success {
     height: 40px;
     border-radius: 50%;
     background-color: var(--color-bg);
-    box-shadow: 6px 6px 12px var(--color-shadow), -6px -6px 12px var(--color-light);
+    box-shadow: var(--shadow-outer);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -752,7 +460,7 @@ input.success {
 }
 
 .scroll-btn:active {
-    box-shadow: inset 2px 2px 5px var(--color-shadow), inset -2px -2px 5px var(--color-light);
+    box-shadow: var(--shadow-button-active);
 }
 
 .scroll-btn:active i {
@@ -767,110 +475,56 @@ input.success {
     right: 10px;
 }
 
-/* Book Details Modal */
-.book-details-modal {
-    max-width: 600px;
-    width: 90%;
-    max-height: 90vh;
-    overflow-y: auto;
-    padding: 20px;
-}
-
-.book-details {
-    display: flex;
-    gap: 20px;
-}
-
-.book-details img {
-    width: 200px;
-    height: auto;
-    object-fit: contain;
-    max-height: 300px;
-    border-radius: 8px;
-    background-color: var(--color-bg);
-}
-
-.book-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.book-description {
-    margin: 10px 0;
-    line-height: 1.5;
-}
-
-.book-buttons {
-    margin-top: 20px;
-    display: flex;
-    gap: 10px;
-    justify-content: flex-start;
-}
-
-/* Book Form Styles */
-.book-form-container {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    color: var(--white);
-}
-
-.form-group input,
-.form-group textarea {
+/* Cart Item Controls */
+.cart-item-controls {
     width: 100%;
-    padding: 10px;
-    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.quantity-btn {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
     background-color: var(--color-bg);
-    border: none;
+    box-shadow: var(--shadow-button-hover);
+}
+
+.quantity {
+    min-width: 24px;
+    text-align: center;
     color: var(--white);
-    box-shadow: inset 2px 2px 5px var(--color-shadow),
-    inset -2px -2px 5px var(--color-light);
 }
 
-.form-group textarea {
-    min-height: 100px;
-    resize: vertical;
-}
-
-.form-text {
-    font-size: 0.8em;
+.item-total {
+    margin: 0;
+    font-weight: bold;
     color: var(--white);
-    opacity: 0.8;
-    margin-top: 5px;
 }
 
-/* Responsive Styles */
-@media (max-width: 768px) {
-    .book-details {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .book-details img {
-        width: auto;
-        max-width: 80%;
-        height: auto;
-    }
-
-    .book-info {
-        text-align: center;
-        width: 100%;
-    }
-
-    .book-buttons {
-        justify-content: center;
-    }
+.remove-item {
+    width: 80%;
+    margin: 0;
 }
 
+/* Responsive Adjustments */
 @media (max-width: 480px) {
     .book {
         flex: 0 0 150px;
@@ -892,50 +546,446 @@ input.success {
     .scroll-btn i {
         font-size: 1.2em;
     }
+}
 
-    /* Make form layout more efficient with image preview */
-    .book-form-container {
-        max-width: 800px;
-        margin: 0 auto;
+/* ===============================
+   Modal Styles
+   =============================== */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.modal-content {
+    background-color: var(--color-bg);
+    margin: 10% auto;
+    padding: 30px;
+    width: 400px;
+    max-width: 90%;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-outer);
+    color: var(--color-text);
+    text-align: center;
+}
+
+.close {
+    color: var(--white);
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: var(--color-light);
+    text-decoration: none;
+}
+
+/* Book Details Modal */
+.book-details-modal {
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.book-details {
+    display: flex;
+    gap: 20px;
+}
+
+.book-details img {
+    width: 200px;
+    height: auto;
+    object-fit: contain;
+    max-height: 300px;
+    border-radius: var(--border-radius-sm);
+    background-color: var(--color-bg);
+}
+
+.book-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.book-description {
+    margin: 10px 0;
+    line-height: 1.5;
+}
+
+.book-buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-start;
+}
+
+/* ===============================
+   Form Styles
+   =============================== */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--white);
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: var(--border-radius-sm);
+    background-color: var(--color-bg);
+    border: none;
+    color: var(--white);
+    box-shadow: var(--shadow-inner);
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.form-text {
+    font-size: 0.8em;
+    color: var(--white);
+    opacity: 0.8;
+    margin-top: 5px;
+}
+
+/* Book Form Styles */
+.book-form-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Edit Profile Form */
+.edit-profile-container input {
+    margin: 8px 0 16px 0;
+}
+
+/* Auth Forms */
+.auth-form input {
+    margin-bottom: 15px;
+}
+
+/* Form Input States */
+.form-group input.error {
+    box-shadow: inset 2px 2px 5px rgba(255, 0, 0, 0.2),
+    inset -5px -5px 10px var(--color-light);
+}
+
+.form-group input.success {
+    box-shadow: inset 2px 2px 5px rgba(0, 255, 0, 0.1),
+    inset -5px -5px 10px var(--color-light);
+}
+
+/* Remove browser autofill styles */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px var(--color-bg) inset !important;
+    -webkit-text-fill-color: var(--white) !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Modal Form Specific Styles */
+.modal-content input {
+    background-color: var(--color-bg);
+    margin: 10px 0;
+    width: 100%;
+}
+
+.modal-content button {
+    width: 100%;
+    margin-top: 20px;
+    padding: 12px;
+    font-size: 1.1em;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .book-details {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .book-details img {
+        width: auto;
+        max-width: 80%;
+        height: auto;
+    }
+
+    .book-info {
+        text-align: center;
+        width: 100%;
+    }
+
+    .book-buttons {
+        justify-content: center;
+    }
+
+    .modal-content {
+        margin: 10% auto;
+        width: 90%;
         padding: 20px;
+    }
+}
+
+/* ===============================
+   Purchase History
+   =============================== */
+.purchase-record {
+    background-color: var(--color-bg);
+    margin-bottom: 30px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-outer);
+    overflow: hidden;
+}
+
+.purchase-header {
+    background-color: var(--color-bg);
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.purchase-header h3 {
+    margin: 0;
+    color: var(--white);
+}
+
+.purchase-date {
+    color: var(--white);
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+.purchase-summary {
+    text-align: right;
+}
+
+.purchase-summary p {
+    margin: 5px 0;
+    color: var(--white);
+}
+
+.purchase-items {
+    display: grid;
+    gap: 20px;
+    padding: 20px;
+}
+
+.purchase-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 20px;
+    align-items: center;
+    background-color: var(--color-bg);
+    padding: 15px;
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-inner);
+}
+
+.purchase-item-image {
+    width: 80px;
+    height: 120px;
+    border-radius: var(--border-radius-sm);
+    overflow: hidden;
+}
+
+.purchase-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.purchase-item-details {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.purchase-item-title {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: var(--white);
+    margin: 0;
+}
+
+.purchase-item-author {
+    color: var(--white);
+    opacity: 0.8;
+    margin: 0;
+}
+
+.purchase-item-isbn {
+    font-size: 0.9em;
+    color: var(--white);
+    opacity: 0.6;
+    margin: 0;
+}
+
+.purchase-item-price {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+}
+
+.price-details {
+    text-align: right;
+    color: var(--white);
+}
+
+.total-price {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: var(--white);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .purchase-item {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .purchase-item-image {
+        margin: 0 auto;
+    }
+
+    .purchase-item-price {
+        align-items: center;
+    }
+
+    .purchase-header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+
+    .purchase-summary {
+        text-align: center;
+    }
+}
+
+.purchase-item p {
+    margin: 8px 0;
+    color: var(--white);
+}
+
+.purchase-history-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+
+
+/* ===============================
+   Login Status
+   =============================== */
+#loginStatus {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+#statusMessage {
+    color: var(--white);
+}
+
+/* Hide auth buttons in header when showing welcome screen */
+#mainContent .auth-buttons {
+    display: none;
+}
+
+/* ===============================
+   Image Preview
+   =============================== */
+.current-image-preview {
+    margin-top: 20px;
+    text-align: center;
+    padding: 20px;
+    background-color: var(--color-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-inner);
+    width: 250px;
+}
+
+.current-image-preview h3 {
+    margin-bottom: 15px;
+    color: var(--white);
+}
+
+.preview-image {
+    width: 100px;
+    height: auto;
+    max-height: 100px;
+    object-fit: contain;
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-outer);
+}
+
+/* ===============================
+   Select Element Styles
+   =============================== */
+select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
+    padding-right: 2.5rem;
+}
+
+select:invalid {
+    color: var(--white);
+    opacity: 0.5;
+}
+
+/* ===============================
+   Utility Classes
+   =============================== */
+.divider {
+    margin: 20px 0;
+    border: none;
+    border-top: 1px solid var(--color-light);
+    opacity: 0.3;
+}
+
+/* ===============================
+   Responsive Grid Layout
+   =============================== */
+@media (min-width: 769px) {
+    .book-form-container {
         display: grid;
         grid-template-columns: 1fr auto;
         gap: 20px;
-    }
-
-    .current-image-preview {
-        margin-top: 20px;
-        text-align: center;
+        max-width: 800px;
+        margin: 0 auto;
         padding: 20px;
-        background-color: var(--color-bg);
-        border-radius: 12px;
-        box-shadow: inset 2px 2px 5px var(--color-shadow),
-        inset -2px -2px 5px var(--color-light);
-        width: 250px; /* Added fixed width */
     }
 
-    .current-image-preview h3 {
-        margin-bottom: 15px;
-        color: var(--white);
-    }
-
-    .preview-image {
-        width: 100px; /* Adjusted smaller width */
-        height: auto; /* Maintains aspect ratio */
-        max-height: 100px; /* Limit maximum height */
-        object-fit: contain;
-        border-radius: 8px;
-        box-shadow: 6px 6px 12px var(--color-shadow),
-        -6px -6px 12px var(--color-light);
-    }
-
-
-    /* Form takes left side */
-    #editBookForm {
-        grid-column: 1;
-    }
-
-    /* Preview takes right side */
     .current-image-preview {
         grid-column: 2;
         align-self: start;
@@ -943,73 +993,43 @@ input.success {
         top: 20px;
     }
 
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .book-form-container {
-            grid-template-columns: 1fr;
-        }
+    #editBookForm {
+        grid-column: 1;
+    }
+}
 
-        .current-image-preview {
-            grid-column: 1;
-            position: static;
-            width: 100%;
-            max-width: 300px;
-            margin: 20px auto;
-        }
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .book-form-container {
+        grid-template-columns: 1fr;
     }
 
-    .cart-item-controls {
-        padding: 8px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        margin-top: auto;
-    }
-
-    .quantity-controls {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        margin-bottom: 8px;
-    }
-
-    .quantity-btn {
-        width: 24px;
-        height: 24px;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        background-color: var(--color-bg);
-        box-shadow: 2px 2px 4px var(--color-shadow), -2px -2px 4px var(--color-light);
-    }
-
-    .quantity {
-        min-width: 24px;
-        text-align: center;
-        color: var(--white);
-    }
-
-    .item-total {
-        text-align: center;
-        margin: 8px 0;
-        font-weight: bold;
-        color: var(--white);
-    }
-
-    .remove-item {
+    .current-image-preview {
+        grid-column: 1;
+        position: static;
         width: 100%;
-        padding: 8px;
-        margin-top: 8px;
-        background-color: rgba(255, 0, 0, 0.1);
+        max-width: 300px;
+        margin: 20px auto;
+    }
+}
+
+/* Small Screen Adjustments */
+@media (max-width: 480px) {
+    .purchase-record {
+        padding: 10px;
     }
 
-    .remove-item:hover {
-        background-color: rgba(255, 0, 0, 0.2);
+    .purchase-header {
+        padding: 10px;
     }
 
-    /* Adjust book tile height for cart items */
-    .cart-container .book {
-        height: auto;
+    .purchase-item {
+        padding: 10px;
     }
+
+    .current-image-preview {
+        padding: 15px;
+    }
+
+
 }

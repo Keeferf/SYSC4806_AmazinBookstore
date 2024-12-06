@@ -957,4 +957,59 @@ input.success {
             margin: 20px auto;
         }
     }
+
+    .cart-item-controls {
+        padding: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        margin-top: auto;
+    }
+
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .quantity-btn {
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background-color: var(--color-bg);
+        box-shadow: 2px 2px 4px var(--color-shadow), -2px -2px 4px var(--color-light);
+    }
+
+    .quantity {
+        min-width: 24px;
+        text-align: center;
+        color: var(--white);
+    }
+
+    .item-total {
+        text-align: center;
+        margin: 8px 0;
+        font-weight: bold;
+        color: var(--white);
+    }
+
+    .remove-item {
+        width: 100%;
+        padding: 8px;
+        margin-top: 8px;
+        background-color: rgba(255, 0, 0, 0.1);
+    }
+
+    .remove-item:hover {
+        background-color: rgba(255, 0, 0, 0.2);
+    }
+
+    /* Adjust book tile height for cart items */
+    .cart-container .book {
+        height: auto;
+    }
 }

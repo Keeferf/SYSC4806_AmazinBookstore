@@ -1,5 +1,8 @@
 const apiUrl = '/api';
 let cart = [];
+
+// Track pending updates to prevent race conditions
+let pendingUpdates = new Map();
 const jwt_token = 'jwt_token';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1154,8 +1157,18 @@ function viewCart() {
     }
 
     const cartContainer = document.createElement('div');
-    cartContainer.className = 'cart-container';
-    content.appendChild(cartContainer);
+    cartContainer.className = 'bookshelf-container';
+
+    const booksRow = document.createElement('div');
+    booksRow.className = 'books-row';
+
+    const leftButton = document.createElement('button');
+    leftButton.className = 'scroll-btn scroll-left';
+    leftButton.innerHTML = '<i class="fas fa-angle-left"></i>';
+
+    const rightButton = document.createElement('button');
+    rightButton.className = 'scroll-btn scroll-right';
+    rightButton.innerHTML = '<i class="fas fa-angle-right"></i>';
 
     let totalCost = 0;
 
@@ -1166,40 +1179,97 @@ function viewCart() {
     ))
         .then(bookItems => {
             bookItems.forEach(({ book, quantity, bookId }) => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'cart-item';
                 const itemTotal = book.price * quantity;
                 totalCost += itemTotal;
 
-                itemDiv.innerHTML = `
-                <div class="cart-item-details" data-cart-item="${bookId}">
-                    <h3>${book.title}</h3>
-                    <p><strong>Author:</strong> ${book.author || 'Unknown Author'}</p>
-                    <p><strong>Price:</strong> $${book.price.toFixed(2)}</p>
-                    <div class="quantity-controls">
-                        <button class="quantity-btn minus-btn" onclick="updateCartItemQuantity('${bookId}', ${quantity - 1})">-</button>
-                        <span class="quantity">${quantity}</span>
-                        <button class="quantity-btn plus-btn" onclick="updateCartItemQuantity('${bookId}', ${quantity + 1})">+</button>
-                    </div>
-                    <p><strong>Total:</strong> <span class="item-total">$${itemTotal.toFixed(2)}</span></p>
-                    <button class="remove-item" onclick="removeFromCart('${bookId}')">Remove</button>
-                </div>
-            `;
+                const bookDiv = document.createElement('div');
+                bookDiv.className = 'book';
+                bookDiv.setAttribute('data-book-id', bookId);
 
-                cartContainer.appendChild(itemDiv);
+                const author = book.author || 'Unknown Author';
+                const imageUrl = book.imageName ? `/api/books/image/${book.imageName}` : '/api/placeholder/200/300';
+
+                bookDiv.innerHTML = `
+                    <div class="book-content">
+                        <div class="book-image">
+                            <img src="${imageUrl}" alt="${book.title}" loading="lazy">
+                        </div>
+                        <h2>${book.title}</h2>
+                        <p class="author">${author}</p>
+                        <div class="cart-item-controls">
+                            <div class="quantity-controls">
+                                <button class="quantity-btn minus-btn">-</button>
+                                <span class="quantity">${quantity}</span>
+                                <button class="quantity-btn plus-btn">+</button>
+                            </div>
+                            <p class="item-total">$${itemTotal.toFixed(2)}</p>
+                            <button class="remove-item">Remove</button>
+                        </div>
+                    </div>
+                `;
+
+                // Add quantity control event listeners
+                const minusBtn = bookDiv.querySelector('.minus-btn');
+                const plusBtn = bookDiv.querySelector('.plus-btn');
+                const removeBtn = bookDiv.querySelector('.remove-item');
+
+                minusBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const currentQuantity = cart.find(item => item.bookId === bookId)?.quantity || 0;
+                    updateCartItemQuantity(bookId, currentQuantity - 1, book.inventory);
+                });
+
+                plusBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const currentQuantity = cart.find(item => item.bookId === bookId)?.quantity || 0;
+                    updateCartItemQuantity(bookId, currentQuantity + 1, book.inventory);
+                });
+
+                removeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    removeFromCart(bookId);
+                });
+
+                booksRow.appendChild(bookDiv);
             });
 
+            cartContainer.appendChild(leftButton);
+            cartContainer.appendChild(booksRow);
+            cartContainer.appendChild(rightButton);
+            content.appendChild(cartContainer);
+
+            // Scroll button functionality
+            leftButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                booksRow.scrollBy({ left: -300, behavior: 'smooth' });
+            });
+
+            rightButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                booksRow.scrollBy({ left: 300, behavior: 'smooth' });
+            });
+
+            const updateScrollButtons = () => {
+                leftButton.style.display = booksRow.scrollLeft > 0 ? 'flex' : 'none';
+                rightButton.style.display =
+                    booksRow.scrollLeft < (booksRow.scrollWidth - booksRow.clientWidth) ? 'flex' : 'none';
+            };
+
+            booksRow.addEventListener('scroll', updateScrollButtons);
+            updateScrollButtons();
+
+            // Add checkout section
             const checkoutSection = document.createElement('div');
             checkoutSection.className = 'checkout-section';
             checkoutSection.innerHTML = `
-            <div class="cart-summary">
-                <h3>Order Summary</h3>
-                <p><strong>Total Items: ${cart.reduce((total, item) => total + item.quantity, 0)}</strong></p>
-                <p><strong>Total Cost: $${totalCost.toFixed(2)}</strong></p>
-                <button id="checkoutBtn" class="checkout-btn">Proceed to Checkout</button>
-                <button onclick="showHome()" class="continue-shopping">Continue Shopping</button>
-            </div>
-        `;
+                <div class="cart-summary">
+                    <h3>Order Summary</h3>
+                    <p><strong>Total Items: ${cart.reduce((total, item) => total + item.quantity, 0)}</strong></p>
+                    <p><strong>Total Cost: $${totalCost.toFixed(2)}</strong></p>
+                    <button id="checkoutBtn" class="checkout-btn">Proceed to Checkout</button>
+                    <button onclick="showHome()" class="continue-shopping">Continue Shopping</button>
+                </div>
+            `;
             content.appendChild(checkoutSection);
 
             document.getElementById('checkoutBtn').addEventListener('click', checkout);
@@ -1212,58 +1282,49 @@ function viewCart() {
  * @param {string} bookId - The ID of the book.
  * @param {number} newQuantity - The new quantity to set.
  */
-function updateCartItemQuantity(bookId, newQuantity) {
+function updateCartItemQuantity(bookId, newQuantity, maxInventory) {
+    // Don't allow negative quantities
     if (newQuantity <= 0) {
         removeFromCart(bookId);
         return;
     }
 
-    fetch(`${apiUrl}/books/${bookId}`)
-        .then(response => response.json())
-        .then(book => {
-            if (newQuantity > book.inventory) {
-                alert('Cannot add more items than available in inventory.');
-                return;
-            }
+    // Check inventory limit
+    if (newQuantity > maxInventory) {
+        alert(`Cannot add more than ${maxInventory} items (current stock limit)`);
+        return;
+    }
 
-            const cartItem = cart.find(item => item.bookId === bookId);
-            if (cartItem) {
-                cartItem.quantity = newQuantity;
-                updateCartCount();
+    // Find current cart item
+    const cartItem = cart.find(item => item.bookId === bookId);
+    if (!cartItem) return;
 
-                // Find the cart item container
-                const itemContainer = document.querySelector(`div[data-cart-item="${bookId}"]`);
-                if (itemContainer) {
-                    // Update quantity
-                    const quantitySpan = itemContainer.querySelector('.quantity');
-                    if (quantitySpan) {
-                        quantitySpan.textContent = newQuantity;
-                    }
+    // Update cart state
+    cartItem.quantity = newQuantity;
 
-                    // Update item total
-                    const itemTotal = book.price * newQuantity;
-                    const totalSpan = itemContainer.querySelector('.item-total');
-                    if (totalSpan) {
-                        totalSpan.textContent = `$${itemTotal.toFixed(2)}`;
-                    }
+    // Update UI
+    const itemContainer = document.querySelector(`div[data-book-id="${bookId}"]`);
+    if (itemContainer) {
+        const quantitySpan = itemContainer.querySelector('.quantity');
+        const itemTotalSpan = itemContainer.querySelector('.item-total');
 
-                    // Update quantity buttons
-                    const minusBtn = itemContainer.querySelector('.minus-btn');
-                    const plusBtn = itemContainer.querySelector('.plus-btn');
-                    if (minusBtn && plusBtn) {
-                        minusBtn.onclick = () => updateCartItemQuantity(bookId, newQuantity - 1);
-                        plusBtn.onclick = () => updateCartItemQuantity(bookId, newQuantity + 1);
-                    }
+        if (quantitySpan) {
+            quantitySpan.textContent = newQuantity;
+        }
 
-                    // Update cart summary
-                    updateCartSummary();
+        // Update item total price
+        fetch(`${apiUrl}/books/${bookId}`)
+            .then(response => response.json())
+            .then(book => {
+                const itemTotal = book.price * newQuantity;
+                if (itemTotalSpan) {
+                    itemTotalSpan.textContent = `$${itemTotal.toFixed(2)}`;
                 }
-            }
-        })
-        .catch(error => {
-            console.error('Error updating quantity:', error);
-            alert('An error occurred while updating the quantity.');
-        });
+                updateCartSummary();
+            });
+    }
+
+    updateCartCount();
 }
 
 function updateCartSummary() {
@@ -1298,9 +1359,36 @@ function updateCartSummary() {
  * @param {string} bookId - The ID of the book to remove.
  */
 function removeFromCart(bookId) {
-    cart = cart.filter(item => item.bookId !== bookId);
+    // Find the item in cart
+    const itemIndex = cart.findIndex(item => item.bookId === bookId);
+    if (itemIndex === -1) return;
+
+    // Remove item from cart array
+    cart.splice(itemIndex, 1);
+
+    // Find and remove the DOM element
+    const bookElement = document.querySelector(`div[data-book-id="${bookId}"]`);
+    if (bookElement) {
+        bookElement.remove();
+    }
+
+    // Update cart count
     updateCartCount();
-    viewCart();
+
+    // If cart is empty, show empty cart message
+    if (cart.length === 0) {
+        const content = document.getElementById('content');
+        content.innerHTML = `
+            <h2>Your Shopping Cart</h2>
+            <div class="empty-cart">
+                <p>Your cart is empty.</p>
+                <button onclick="showHome()">Continue Shopping</button>
+            </div>
+        `;
+    } else {
+        // Update the cart summary if items remain
+        updateCartSummary();
+    }
 }
 
 /**

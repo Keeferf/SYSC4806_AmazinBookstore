@@ -7,7 +7,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class ImageConfig implements WebMvcConfigurer {
 
-    private static final String UPLOAD_DIRECTORY = "target/uploads/";
+    private static final String UPLOAD_DIRECTORY = "src/main/resources/uploads/";
     private static final String URL_PATH = "/uploads/**";
 
     @Override

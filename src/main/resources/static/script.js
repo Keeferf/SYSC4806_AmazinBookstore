@@ -869,7 +869,7 @@ function editBook(event) {
                             <label>Picture URL</label>
                             <input type="file" id="bookCoverInput" accept="image/jpeg, image/png">
                             <input type="hidden" name="pictureURL" value="${book.pictureURL}">
-                            <img id="previewImage" src="${book.pictureURL || '/uploads/images/error.jpg'}" alt="Book Cover" style="max-width: 150px; max-height: 200px; margin-top: 10px; display: block;">
+                            <img id="previewImage" src="${book.pictureURL || '/uploads/error.jpg'}" alt="Book Cover" style="max-width: 150px; max-height: 200px; margin-top: 10px; display: block;">
                         </div>
                         <div class="form-group">
                             <label>Price</label>

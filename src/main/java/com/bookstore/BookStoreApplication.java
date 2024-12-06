@@ -48,22 +48,24 @@ public class BookStoreApplication {
      * Connects to the MongoDB
      */
     public static void MongoConnection() {
-        // Fetch the connection string from the environment variable
-        String connectionString = System.getenv("MONGODB_URI");
+        // Comment out when wanting to run locally or through Azure
+        //String connectionString = System.getenv("MONGODB_URI");
+        String connectionString = "mongodb+srv://DBAccess:SYSC4806pass@cluster0.ag8xa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         
         if (connectionString == null || connectionString.isEmpty()) {
-            throw new IllegalStateException("MONGODB_URI environment variable is not set.");
+            log.warn("MONGODB_URI environment variable is not set. Falling back to hardcoded connection string for local testing.");
+    
         }
-
+    
         ServerApi serverApi = ServerApi.builder()
                 .version(ServerApiVersion.V1)
                 .build();
-
+    
         MongoClientSettings settings = MongoClientSettings.builder()
                 .applyConnectionString(new ConnectionString(connectionString))
                 .serverApi(serverApi)
                 .build();
-
+    
         try (MongoClient mongoClient = MongoClients.create(settings)) {
             MongoDatabase database = mongoClient.getDatabase("bookstoreDB");
             database.runCommand(new Document("ping", 1));
@@ -73,6 +75,7 @@ public class BookStoreApplication {
             e.printStackTrace();
         }
     }
+    
 
 
     /**

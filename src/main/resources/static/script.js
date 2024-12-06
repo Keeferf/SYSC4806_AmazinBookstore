@@ -638,53 +638,40 @@ function displayBooks(books) {
     books.forEach(book => {
         const bookDiv = document.createElement('div');
         bookDiv.className = 'book';
+        bookDiv.setAttribute('data-book-id', book.id);
 
         const author = book.author || 'Unknown Author';
-        const price = book.price !== undefined ? `$${book.price.toFixed(2)}` : 'Price not available';
-        const inventoryText = book.inventory > 0 ? `In Stock: ${book.inventory}` : 'Out of Stock';
-        const isbn = book.isbn || 'ISBN not available';
-
-        const addToCartButton = !hasRole('admin') && book.inventory > 0
-            ? `<button class="addToCartBtn" data-id="${book.id}">Add to Cart</button>`
-            : '';
-
-        const adminButtons = hasRole('admin')
-            ? `
-                <button class="editBookBtn" data-id="${book.id}">Edit</button>
-                <button class="deleteBookBtn" data-id="${book.id}">Delete</button>
-              `
-            : '';
+        const imageUrl = book.imageName ? `/api/books/image/${book.imageName}` : '/api/placeholder/200/300';
 
         bookDiv.innerHTML = `
             <div class="book-content">
-                <h2>${book.title}</h2>
-                <p><strong>ISBN:</strong> ${isbn}</p>
-                <p><strong>Author:</strong> ${author}</p>
-                <p class="book-description">${book.description || 'No description available'}</p>
-                <p><strong>Price:</strong> ${price}</p>
-                <p><strong>Inventory:</strong> ${inventoryText}</p>
-                <div class="book-buttons">
-                    ${addToCartButton}
-                    ${adminButtons}
+                <div class="book-image">
+                    <img src="${imageUrl}" alt="${book.title}" loading="lazy">
                 </div>
+                <h2>${book.title}</h2>
+                <p class="author">${author}</p>
             </div>
         `;
 
+        // Add click event to show full book details
+        bookDiv.addEventListener('click', () => showBookDetails(book));
         booksRow.appendChild(bookDiv);
     });
 
     content.appendChild(bookshelfContainer);
 
     // Add scroll button functionality
-    leftButton.addEventListener('click', () => {
+    leftButton.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent event bubbling
         booksRow.scrollBy({ left: -300, behavior: 'smooth' });
     });
 
-    rightButton.addEventListener('click', () => {
+    rightButton.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent event bubbling
         booksRow.scrollBy({ left: 300, behavior: 'smooth' });
     });
 
-    // Update scroll button visibility based on scroll position
+    // Update scroll button visibility
     const updateScrollButtons = () => {
         leftButton.style.display = booksRow.scrollLeft > 0 ? 'flex' : 'none';
         rightButton.style.display =
@@ -692,21 +679,120 @@ function displayBooks(books) {
     };
 
     booksRow.addEventListener('scroll', updateScrollButtons);
-    updateScrollButtons(); // Initial check
+    updateScrollButtons();
+}
 
-    // Add event listeners for buttons
+function showBookDetails(book) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+
+    const addToCartButton = !hasRole('admin') && book.inventory > 0
+        ? `<button class="addToCartBtn" data-id="${book.id}">Add to Cart</button>`
+        : book.inventory === 0 ? '<button disabled>Out of Stock</button>' : '';
+
+    const adminButtons = hasRole('admin')
+        ? `
+            <button class="editBookBtn" data-id="${book.id}">Edit</button>
+            <button class="deleteBookBtn" data-id="${book.id}">Delete</button>
+          `
+        : '';
+
+    const imageUrl = book.imageName ? `/api/books/image/${book.imageName}` : '/api/placeholder/200/300';
+
+    modal.innerHTML = `
+        <div class="modal-content book-details-modal">
+            <span class="close">&times;</span>
+            <div class="book-details">
+                <div class="book-image-container">
+                    <img src="${imageUrl}" 
+                         alt="${book.title}"
+                         onload="this.style.opacity='1'"
+                         onerror="this.src='/api/placeholder/200/300'">
+                </div>
+                <div class="book-info">
+                    <h2>${book.title}</h2>
+                    <p><strong>Author:</strong> ${book.author || 'Unknown Author'}</p>
+                    <p><strong>ISBN:</strong> ${book.isbn || 'ISBN not available'}</p>
+                    <p class="book-description"><strong>Description:</strong> ${book.description || 'No description available'}</p>
+                    <p><strong>Price:</strong> $${book.price ? book.price.toFixed(2) : 'N/A'}</p>
+                    <p><strong>Inventory:</strong> ${book.inventory > 0 ? `In Stock: ${book.inventory}` : 'Out of Stock'}</p>
+                    <div class="book-buttons">
+                        ${addToCartButton}
+                        ${adminButtons}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add fade-in effect for image
+    const style = document.createElement('style');
+    style.textContent = `
+        .book-image-container img {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+    `;
+    document.head.appendChild(style);
+
+    document.body.appendChild(modal);
+    modal.style.display = 'block';
+
+    // Close button functionality
+    const closeBtn = modal.querySelector('.close');
+    closeBtn.onclick = () => {
+        modal.remove();
+        // Remove the dynamic style when modal is closed
+        style.remove();
+    };
+
+    // Click outside to close
+    window.onclick = (event) => {
+        if (event.target === modal) {
+            modal.remove();
+            // Remove the dynamic style when modal is closed
+            style.remove();
+        }
+    };
+
+    // Handle escape key press
+    const handleEscapeKey = (event) => {
+        if (event.key === 'Escape') {
+            modal.remove();
+            style.remove();
+            document.removeEventListener('keydown', handleEscapeKey);
+        }
+    };
+    document.addEventListener('keydown', handleEscapeKey);
+
+    // Add event listeners for buttons in the modal
     if (!hasRole('admin')) {
-        document.querySelectorAll('.addToCartBtn').forEach(button => {
-            button.addEventListener('click', addToCart);
+        modal.querySelectorAll('.addToCartBtn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent modal from closing
+                addToCart(e);
+            });
         });
     }
 
     if (hasRole('admin')) {
-        document.querySelectorAll('.editBookBtn').forEach(button => {
-            button.addEventListener('click', editBook);
+        modal.querySelectorAll('.editBookBtn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent modal from closing
+                editBook(e);
+                modal.remove(); // Close modal after clicking edit
+                style.remove();
+            });
         });
-        document.querySelectorAll('.deleteBookBtn').forEach(button => {
-            button.addEventListener('click', deleteBook);
+        modal.querySelectorAll('.deleteBookBtn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent modal from closing
+                if (confirm('Are you sure you want to delete this book?')) {
+                    deleteBook(e);
+                    modal.remove(); // Close modal after confirming delete
+                    style.remove();
+                }
+            });
         });
     }
 }
@@ -761,8 +847,9 @@ function showAddBookForm() {
                     <input type="text" name="publisher">
                 </div>
                 <div class="form-group">
-                    <label>Picture URL</label>
-                    <input type="text" name="pictureURL">
+                    <label>Image Name</label>
+                    <input type="text" name="imageName" placeholder="e.g., harrypotter.png">
+                    <small class="form-text">Enter the name of the image file located in the bookImages folder</small>
                 </div>
                 <div class="form-group">
                     <label>Price</label>
@@ -772,7 +859,10 @@ function showAddBookForm() {
                     <label>Inventory</label>
                     <input type="number" name="inventory" required>
                 </div>
-                <button type="submit">Add Book</button>
+                <div class="form-buttons">
+                    <button type="submit">Add Book</button>
+                    <button type="button" onclick="showHome()">Cancel</button>
+                </div>
             </form>
         </div>
     `;
@@ -870,8 +960,10 @@ function editBook(event) {
                             <input type="text" name="publisher" value="${book.publisher || ''}">
                         </div>
                         <div class="form-group">
-                            <label>Picture URL</label>
-                            <input type="text" name="pictureURL" value="${book.pictureURL || ''}">
+                            <label>Image Name</label>
+                            <input type="text" name="imageName" value="${book.imageName || ''}" 
+                                   placeholder="e.g., harrypotter.png">
+                            <small class="form-text">Enter the name of the image file located in the bookImages folder</small>
                         </div>
                         <div class="form-group">
                             <label>Price</label>
@@ -881,7 +973,10 @@ function editBook(event) {
                             <label>Inventory</label>
                             <input type="number" name="inventory" value="${book.inventory}" required>
                         </div>
-                        <button type="submit">Update Book</button>
+                        <div class="form-buttons">
+                            <button type="submit">Update Book</button>
+                            <button type="button" onclick="showHome()">Cancel</button>
+                        </div>
                     </form>
                 </div>
             `;

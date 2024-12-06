@@ -8,14 +8,19 @@ import com.bookstore.repository.BookRepository;
 import com.bookstore.repository.CheckoutRepository;
 import com.bookstore.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -52,6 +57,24 @@ public class BookController {
         return bookRepository.findById(id)
                 .map(book -> ResponseEntity.ok().body(book))
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/image/{imageName}")
+    public ResponseEntity<Resource> getBookImage(@PathVariable String imageName) {
+        try {
+            Path imagePath = Paths.get("src/main/resources/static/bookImages/" + imageName);
+            Resource resource = new FileSystemResource(imagePath);
+
+            if (resource.exists()) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.IMAGE_JPEG) // You might want to determine this dynamically
+                        .body(resource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     /**
@@ -157,7 +180,7 @@ public class BookController {
             existingBook.setDescription(bookDetails.getDescription());
             existingBook.setAuthor(bookDetails.getAuthor());
             existingBook.setPublisher(bookDetails.getPublisher());
-            existingBook.setPictureURL(bookDetails.getPictureURL());
+            existingBook.setImageName(bookDetails.getImageName());
             existingBook.setPrice(bookDetails.getPrice());
             existingBook.setInventory(bookDetails.getInventory());
 

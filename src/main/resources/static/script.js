@@ -1536,31 +1536,29 @@ function viewPurchaseHistory() {
                     totalItems += quantity;
                     totalCost += itemTotal;
 
+                    // Create a unique ID for this specific purchase item
+                    const uniqueImageId = `book-img-${purchase.id}-${item.bookId}`;
+
                     // Get the book image URL
-                    let imageUrl;
                     if (item.bookId) {
-                        // Fetch the current book data to get the image
                         fetch(`${apiUrl}/books/${item.bookId}`)
                             .then(response => response.json())
                             .then(book => {
-                                const imgElement = document.querySelector(`#book-img-${item.bookId}`);
+                                const imgElement = document.getElementById(uniqueImageId);
                                 if (imgElement) {
                                     imgElement.src = book.imageName ? `/api/books/image/${book.imageName}` : '/api/placeholder/80/120';
                                 }
                             })
                             .catch(() => {
-                                // If fetch fails, keep the placeholder
                                 console.log('Failed to fetch book image');
                             });
                     }
-                    // Start with placeholder while we fetch the actual image
-                    imageUrl = '/api/placeholder/80/120';
 
                     return `
                         <div class="purchase-item">
                             <div class="purchase-item-image">
-                                <img id="book-img-${item.bookId}" 
-                                     src="${imageUrl}" 
+                                <img id="${uniqueImageId}" 
+                                     src="/api/placeholder/80/120" 
                                      alt="${item.title}"
                                      loading="lazy">
                             </div>

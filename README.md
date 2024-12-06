@@ -11,11 +11,9 @@ This project uses GitHub Projects to manage tasks. The current Kanban board is d
 - **Completed**: Features that have been fully developed and tested.
 ## Current Kanban State
 - **Backlog**:
-  - Implement book recommendation list
 
 - **In Progress**:
   - Create and connect prod database
-  - Deploy to Azure (dev, staging, prod)
 
 - **Completed**:
   - Initialize default customer and default admin users
@@ -31,6 +29,8 @@ This project uses GitHub Projects to manage tasks. The current Kanban board is d
   - Database schema diagram
   - Fix error occurring when book is purchased, it cannot be updated or deleted (decoupling)
   - Update README
+  - Deploy to Azure (dev, staging, prod)
+  - Implement book recommendation list
 
 ## Next Sprint Plan
 ### Milestone 3: Final Demo
@@ -43,11 +43,12 @@ This project uses GitHub Projects to manage tasks. The current Kanban board is d
   4. Implement book recommendation based on user purchases
   5. Secure endpoints
   6. Improve the look of the user interface
+  7. Implementation of MongoDB Atlas
 
 ## Database Schema
 The following is the current schema of the database used in the AmazinBookstore project:
-![Database schema milestone 3.png](Diagrams%2FDatabase%20schema%20milestone%201.png)
+![Database schema milestone 3.png](Diagrams%2FDatabase%20schema%20milestone%203.png)
 
 ## UML Diagram
 The following is the current UML diagram used in the AmazinBookstore project:
-![UML Diagram Miletone 3.png](Diagrams/UML%20Diagram%20Milestone%201.png)
+![UML Diagram Miletone 3.png](Diagrams/UML%20Diagram%20Milestone%203.png)

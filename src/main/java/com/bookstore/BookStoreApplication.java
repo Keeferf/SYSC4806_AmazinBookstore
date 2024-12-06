@@ -49,8 +49,8 @@ public class BookStoreApplication {
      */
     public static void MongoConnection() {
         // Comment out when wanting to run locally or through Azure
-        //String connectionString = System.getenv("MONGODB_URI");
-        String connectionString = "mongodb+srv://DBAccess:SYSC4806pass@cluster0.ag8xa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+        String connectionString = System.getenv("MONGODB_URI");
+        // String connectionString = "mongodb+srv://DBAccess:SYSC4806pass@cluster0.ag8xa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
         
         if (connectionString == null || connectionString.isEmpty()) {
             log.warn("MONGODB_URI environment variable is not set. Falling back to hardcoded connection string for local testing.");

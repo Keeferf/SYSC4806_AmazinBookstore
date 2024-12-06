@@ -619,10 +619,10 @@ function displayBooks(books) {
         const bookDiv = document.createElement('div');
         bookDiv.className = 'book';
 
+        const pictureURL = book.pictureURL || '/uploads/error.jpg';
         const author = book.author || 'Unknown Author';
         const price = book.price !== undefined ? `$${book.price.toFixed(2)}` : 'Price not available';
-        const inventoryText = book.inventory > 0 ? `In Stock: ${book.inventory}` : 'Out of Stock';
-        const isbn = book.isbn || 'ISBN not available';
+        const inventoryText = book.inventory > 0 ? `${book.inventory} Copies Available` : 'Out of Stock';
 
         const addToCartButton = !hasRole('admin') && book.inventory > 0
             ? `<button class="addToCartBtn" data-id="${book.id}">Add to Cart</button>`
@@ -630,20 +630,26 @@ function displayBooks(books) {
 
         const adminButtons = hasRole('admin')
             ? `
-                <button class="editBookBtn" data-id="${book.id}">Edit</button>
-                <button class="deleteBookBtn" data-id="${book.id}">Delete</button>
+                <div class="button-group">
+                    <button class="editBookBtn" data-id="${book.id}">Edit</button>
+                    <button class="deleteBookBtn" data-id="${book.id}">Delete</button>
+                </div>
               `
             : '';
 
         bookDiv.innerHTML = `
-            <h2>${book.title}</h2>
-            <p><strong>ISBN:</strong> ${isbn}</p>
-            <p><strong>Author:</strong> ${author}</p>
-            <p>${book.description}</p>
-            <p><strong>Price:</strong> ${price}</p>
-            <p><strong>Inventory:</strong> ${inventoryText}</p>
-            ${addToCartButton}
-            ${adminButtons}
+            <img src="${pictureURL}" alt="${book.title}" class="book-cover">
+            <div class="book-details">
+                <h2 class="book-title">${book.title}</h2>
+                <p class="author">${author}</p>
+                <p class="price">${price}</p>
+                <p class="inventory">${inventoryText}</p>
+                ${addToCartButton}
+                ${adminButtons}
+            </div>
+            <div class="description">
+                <p>${book.description || 'No description available'}</p>
+            </div>
         `;
 
         content.appendChild(bookDiv);
@@ -716,7 +722,9 @@ function showAddBookForm() {
                 </div>
                 <div class="form-group">
                     <label>Picture URL</label>
-                    <input type="text" name="pictureURL">
+                    <input type="file" id="bookCoverInput" accept="image/jpeg, image/png">
+                    <input type="hidden" name="pictureURL">
+                    <img id="previewImage" src="/uploads/error.jpg" alt="Book Cover" style="max-width: 150px; max-height: 200px; margin-top: 10px; display: block;">
                 </div>
                 <div class="form-group">
                     <label>Price</label>
@@ -730,9 +738,43 @@ function showAddBookForm() {
             </form>
         </div>
     `;
+    handleImageUpload();
 
     document.getElementById('addBookForm').addEventListener('submit', submitNewBook);
 }
+
+/**
+ * Handles image upload and preview
+ */
+function handleImageUpload() {
+    const fileInput = document.getElementById('bookCoverInput');
+    const previewImage = document.getElementById('previewImage');
+    const hiddenPictureURL = document.querySelector('[name="pictureURL"]');
+
+    fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/api/books/uploadImage', {
+                method: 'POST',
+                body: formData,
+            })
+                .then(response => response.text())
+                .then(data => {
+                    hiddenPictureURL.value = data;
+                    previewImage.src = data;
+                })
+                .catch(error => {
+                    console.error('Error uploading image:', error);
+                    previewImage.src = '/uploads/error.jpg';
+                });
+        }
+    });
+}
+
+
 
 /**
  * Submits the new book data to the server.
@@ -825,7 +867,9 @@ function editBook(event) {
                         </div>
                         <div class="form-group">
                             <label>Picture URL</label>
-                            <input type="text" name="pictureURL" value="${book.pictureURL || ''}">
+                            <input type="file" id="bookCoverInput" accept="image/jpeg, image/png">
+                            <input type="hidden" name="pictureURL" value="${book.pictureURL}">
+                            <img id="previewImage" src="${book.pictureURL || '/uploads/images/error.jpg'}" alt="Book Cover" style="max-width: 150px; max-height: 200px; margin-top: 10px; display: block;">
                         </div>
                         <div class="form-group">
                             <label>Price</label>
@@ -839,6 +883,8 @@ function editBook(event) {
                     </form>
                 </div>
             `;
+
+            handleImageUpload();
 
             document.getElementById('editBookForm').addEventListener('submit', submitEditBook);
         })

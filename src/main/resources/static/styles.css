@@ -234,26 +234,96 @@ header {
 }
 
 #content {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 5px;
     padding: 20px;
+    justify-items: start;
+    align-items: start;
 }
 
 /* Book Display */
+
 .book {
     background-color: var(--color-bg);
-    padding: 20px;
-    margin-bottom: 20px;
     border-radius: 12px;
     box-shadow: 6px 6px 12px var(--color-shadow), -6px -6px 12px var(--color-light);
+    width: 100%;
+    max-width: 200px;
+    height: 550px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    position: relative;
 }
 
-.book h2 {
-    margin: 0;
+.book .book-cover {
+    width: 200px;
+    height: 350px;
+    max-height: 315px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.book .book-details {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    width: 100%;
+}
+
+.book .book-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin: 5px 0;
     color: var(--white);
 }
 
-.book p {
-    margin: 10px 0;
+.book .author {
+    font-size: 1em;
     color: var(--white);
+    margin-bottom: 5px;
+}
+
+.book .description {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 105%;
+    transform: translateY(-50%);
+    width: 200px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: var(--white);
+    text-align: left;
+    font-size: 0.9em;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+    transition: opacity 0.3s ease-in-out;
+    opacity: 0;
+}
+
+.book:hover .description {
+    display: block;
+    opacity: 1;
+}
+
+.book .price {
+    font-size: 1.2em;
+    color: #007bff;
+    margin: 5px 0;
+}
+
+.book .inventory {
+    font-size: 0.9em;
+    color: var(--white);
+    margin-bottom: 10px;
 }
 
 /* ===============================
@@ -295,8 +365,66 @@ button:active {
     box-shadow: inset 1px 1px 2px var(--color-shadow), inset -1px -1px 2px var(--color-light);
 }
 
-button.addToCartBtn {
+
+.book .button-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
     margin-top: 10px;
+}
+
+/* Button setup */
+.editBookBtn, .deleteBookBtn {
+    padding: 5px 10px;
+    font-size: 0.9em;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    transition: background-color 0.2s ease;
+}
+
+.add-book-btn {
+    align-self: flex-start;
+    margin-bottom: 10px;
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.2s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.addToCartBtn {
+    padding: 8px 12px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    width: calc(100% - 20px);
+    margin-top: auto;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+/* Button Hover Colours*/
+
+.editBookBtn:hover {
+    background-color: #007bff;
+}
+
+.deleteBookBtn:hover {
+    background-color: #dc3545;
+}
+
+.addToCartBtn:hover {
+    background-color: #0056b3;
 }
 
 /* Authentication Buttons */
@@ -587,7 +715,7 @@ input[type="radio"] {
 
 /* Form group spacing */
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 50px;
 }
 
 .form-group label {

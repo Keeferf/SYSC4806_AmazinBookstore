@@ -1,5 +1,6 @@
 package com.bookstore.controller;
 
+import com.bookstore.image.ImageConfig;
 import com.bookstore.model.Book;
 import com.bookstore.model.PurchaseItem;
 import com.bookstore.model.Role;
@@ -15,7 +16,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.*;
+import java.io.IOException;
 import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -101,6 +105,33 @@ public class BookController {
     @GetMapping("/filter/inventory")
     public List<Book> filterBooksByInventory(@RequestParam int minInventory) {
         return bookRepository.findByInventoryGreaterThan(minInventory);
+    }
+
+    /**
+     * Uploads an image for book cover to the file path
+     */
+
+    @PostMapping("/uploadImage")
+    public ResponseEntity<String> uploadImage(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("File is empty");
+        }
+
+        try {
+            String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+            Path uploadPath = Paths.get(ImageConfig.getUploadsDirectory());
+
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+
+            Path filePath = uploadPath.resolve(fileName);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            return ResponseEntity.ok("/uploads/" + fileName);
+        } catch (IOException e) {
+            return ResponseEntity.status(500).body("Error saving file: " + e.getMessage());
+        }
     }
 
     /**

@@ -41,7 +41,7 @@ public class Book {
         this.description = description;
         this.author = author;
         this.publisher = publisher;
-        this.pictureURL = pictureURL;
+        this.pictureURL = null;
         setPrice(price);
         setInventory(inventory);
     }

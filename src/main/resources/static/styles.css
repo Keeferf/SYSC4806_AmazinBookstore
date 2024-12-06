@@ -631,3 +631,195 @@ input.success {
     box-shadow: inset 2px 2px 5px rgba(0, 255, 0, 0.1),
     inset -5px -5px 10px var(--color-light);
 }
+
+/* Book Grid Layout */
+.books-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+    padding: 20px;
+}
+
+.book {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-bg);
+    border-radius: 12px;
+    box-shadow: 6px 6px 12px var(--color-shadow), -6px -6px 12px var(--color-light);
+    transition: transform 0.2s ease;
+}
+
+.book:hover {
+    transform: translateY(-5px);
+}
+
+.book-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.book h2 {
+    font-size: 1.4em;
+    margin: 0 0 15px 0;
+    color: var(--white);
+}
+
+.book-description {
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.book-buttons {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-start;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .books-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .books-grid {
+        grid-template-columns: 1fr;
+        padding: 10px;
+    }
+}
+
+/* Bookshelf Layout */
+.bookshelf-container {
+    position: relative;
+    width: 100%;
+    padding: 20px 0;
+    display: flex;
+    align-items: center;
+}
+
+.books-row {
+    display: flex;
+    gap: 30px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding: 20px 40px;
+    -ms-overflow-style: none;  /* Hide scrollbar IE and Edge */
+    scrollbar-width: none;  /* Hide scrollbar Firefox */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.books-row::-webkit-scrollbar {
+    display: none;
+}
+
+.book {
+    flex: 0 0 300px;
+    background-color: var(--color-bg);
+    border-radius: 12px;
+    box-shadow: 6px 6px 12px var(--color-shadow), -6px -6px 12px var(--color-light);
+    transition: transform 0.2s ease;
+}
+
+.book:hover {
+    transform: translateY(-5px);
+}
+
+.book-content {
+    padding: 20px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.book h2 {
+    font-size: 1.4em;
+    margin: 0 0 15px 0;
+    color: var(--white);
+}
+
+.book-description {
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.book-buttons {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-start;
+}
+
+.scroll-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--color-bg);
+    box-shadow: 6px 6px 12px var(--color-shadow), -6px -6px 12px var(--color-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.scroll-btn i {
+    color: var(--white);
+    font-size: 1.5em;
+    transition: transform 0.2s ease;
+}
+
+.scroll-btn:hover {
+    transform: translateY(-50%) scale(1.1);
+}
+
+.scroll-btn:hover i {
+    transform: scale(1.2);
+}
+
+.scroll-btn:active {
+    box-shadow: inset 2px 2px 5px var(--color-shadow), inset -2px -2px 5px var(--color-light);
+}
+
+.scroll-btn:active i {
+    transform: scale(0.9);
+}
+
+.scroll-left {
+    left: 10px;
+}
+
+.scroll-right {
+    right: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .book {
+        flex: 0 0 250px;
+    }
+
+    .scroll-btn {
+        width: 35px;
+        height: 35px;
+    }
+}

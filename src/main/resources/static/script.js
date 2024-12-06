@@ -615,6 +615,26 @@ function displayBooks(books) {
         return;
     }
 
+    // Create container for the scrollable book shelf
+    const bookshelfContainer = document.createElement('div');
+    bookshelfContainer.className = 'bookshelf-container';
+
+    // Add navigation buttons with Font Awesome arrows
+    const leftButton = document.createElement('button');
+    leftButton.className = 'scroll-btn scroll-left';
+    leftButton.innerHTML = '<i class="fas fa-angle-left"></i>';
+
+    const rightButton = document.createElement('button');
+    rightButton.className = 'scroll-btn scroll-right';
+    rightButton.innerHTML = '<i class="fas fa-angle-right"></i>';
+
+    const booksRow = document.createElement('div');
+    booksRow.className = 'books-row';
+
+    bookshelfContainer.appendChild(leftButton);
+    bookshelfContainer.appendChild(booksRow);
+    bookshelfContainer.appendChild(rightButton);
+
     books.forEach(book => {
         const bookDiv = document.createElement('div');
         bookDiv.className = 'book';
@@ -636,19 +656,45 @@ function displayBooks(books) {
             : '';
 
         bookDiv.innerHTML = `
-            <h2>${book.title}</h2>
-            <p><strong>ISBN:</strong> ${isbn}</p>
-            <p><strong>Author:</strong> ${author}</p>
-            <p>${book.description}</p>
-            <p><strong>Price:</strong> ${price}</p>
-            <p><strong>Inventory:</strong> ${inventoryText}</p>
-            ${addToCartButton}
-            ${adminButtons}
+            <div class="book-content">
+                <h2>${book.title}</h2>
+                <p><strong>ISBN:</strong> ${isbn}</p>
+                <p><strong>Author:</strong> ${author}</p>
+                <p class="book-description">${book.description || 'No description available'}</p>
+                <p><strong>Price:</strong> ${price}</p>
+                <p><strong>Inventory:</strong> ${inventoryText}</p>
+                <div class="book-buttons">
+                    ${addToCartButton}
+                    ${adminButtons}
+                </div>
+            </div>
         `;
 
-        content.appendChild(bookDiv);
+        booksRow.appendChild(bookDiv);
     });
 
+    content.appendChild(bookshelfContainer);
+
+    // Add scroll button functionality
+    leftButton.addEventListener('click', () => {
+        booksRow.scrollBy({ left: -300, behavior: 'smooth' });
+    });
+
+    rightButton.addEventListener('click', () => {
+        booksRow.scrollBy({ left: 300, behavior: 'smooth' });
+    });
+
+    // Update scroll button visibility based on scroll position
+    const updateScrollButtons = () => {
+        leftButton.style.display = booksRow.scrollLeft > 0 ? 'flex' : 'none';
+        rightButton.style.display =
+            booksRow.scrollLeft < (booksRow.scrollWidth - booksRow.clientWidth) ? 'flex' : 'none';
+    };
+
+    booksRow.addEventListener('scroll', updateScrollButtons);
+    updateScrollButtons(); // Initial check
+
+    // Add event listeners for buttons
     if (!hasRole('admin')) {
         document.querySelectorAll('.addToCartBtn').forEach(button => {
             button.addEventListener('click', addToCart);

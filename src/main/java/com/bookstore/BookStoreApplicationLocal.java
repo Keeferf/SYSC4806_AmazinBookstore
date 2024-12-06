@@ -27,7 +27,7 @@ import org.springframework.context.annotation.Bean;
  * Starts up the application
  */
 @SpringBootApplication
-public class BookStoreApplication {
+public class BookStoreApplicationLocal {
 
     private static final Logger log = LoggerFactory.getLogger(BookStoreApplication.class);
 
@@ -48,12 +48,8 @@ public class BookStoreApplication {
      * Connects to the MongoDB
      */
     public static void MongoConnection() {
-        // Fetch the connection string from the environment variable
-        String connectionString = System.getenv("MONGODB_URI");
-        
-        if (connectionString == null || connectionString.isEmpty()) {
-            throw new IllegalStateException("MONGODB_URI environment variable is not set.");
-        }
+        // Replace with your connection string
+        String connectionString = "mongodb+srv://DBAccess:SYSC4806pass@cluster0.ag8xa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
         ServerApi serverApi = ServerApi.builder()
                 .version(ServerApiVersion.V1)
@@ -73,6 +69,7 @@ public class BookStoreApplication {
             e.printStackTrace();
         }
     }
+
 
 
     /**

@@ -1,5 +1,8 @@
 const apiUrl = '/api';
 let cart = [];
+
+// Track pending updates to prevent race conditions
+let pendingUpdates = new Map();
 const jwt_token = 'jwt_token';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -615,52 +618,184 @@ function displayBooks(books) {
         return;
     }
 
+    // Create container for the scrollable book shelf
+    const bookshelfContainer = document.createElement('div');
+    bookshelfContainer.className = 'bookshelf-container';
+
+    // Add navigation buttons with Font Awesome arrows
+    const leftButton = document.createElement('button');
+    leftButton.className = 'scroll-btn scroll-left';
+    leftButton.innerHTML = '<i class="fas fa-angle-left"></i>';
+
+    const rightButton = document.createElement('button');
+    rightButton.className = 'scroll-btn scroll-right';
+    rightButton.innerHTML = '<i class="fas fa-angle-right"></i>';
+
+    const booksRow = document.createElement('div');
+    booksRow.className = 'books-row';
+
+    bookshelfContainer.appendChild(leftButton);
+    bookshelfContainer.appendChild(booksRow);
+    bookshelfContainer.appendChild(rightButton);
+
     books.forEach(book => {
         const bookDiv = document.createElement('div');
         bookDiv.className = 'book';
+        bookDiv.setAttribute('data-book-id', book.id);
 
         const author = book.author || 'Unknown Author';
-        const price = book.price !== undefined ? `$${book.price.toFixed(2)}` : 'Price not available';
-        const inventoryText = book.inventory > 0 ? `In Stock: ${book.inventory}` : 'Out of Stock';
-        const isbn = book.isbn || 'ISBN not available';
-
-        const addToCartButton = !hasRole('admin') && book.inventory > 0
-            ? `<button class="addToCartBtn" data-id="${book.id}">Add to Cart</button>`
-            : '';
-
-        const adminButtons = hasRole('admin')
-            ? `
-                <button class="editBookBtn" data-id="${book.id}">Edit</button>
-                <button class="deleteBookBtn" data-id="${book.id}">Delete</button>
-              `
-            : '';
+        const imageUrl = book.imageName ? `/api/books/image/${book.imageName}` : '/api/placeholder/200/300';
 
         bookDiv.innerHTML = `
-            <h2>${book.title}</h2>
-            <p><strong>ISBN:</strong> ${isbn}</p>
-            <p><strong>Author:</strong> ${author}</p>
-            <p>${book.description}</p>
-            <p><strong>Price:</strong> ${price}</p>
-            <p><strong>Inventory:</strong> ${inventoryText}</p>
-            ${addToCartButton}
-            ${adminButtons}
+            <div class="book-content">
+                <div class="book-image">
+                    <img src="${imageUrl}" alt="${book.title}" loading="lazy">
+                </div>
+                <h2>${book.title}</h2>
+                <p class="author">${author}</p>
+            </div>
         `;
 
-        content.appendChild(bookDiv);
+        // Add click event to show full book details
+        bookDiv.addEventListener('click', () => showBookDetails(book));
+        booksRow.appendChild(bookDiv);
     });
 
+    content.appendChild(bookshelfContainer);
+
+    // Add scroll button functionality
+    leftButton.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent event bubbling
+        booksRow.scrollBy({ left: -300, behavior: 'smooth' });
+    });
+
+    rightButton.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent event bubbling
+        booksRow.scrollBy({ left: 300, behavior: 'smooth' });
+    });
+
+    // Update scroll button visibility
+    const updateScrollButtons = () => {
+        leftButton.style.display = booksRow.scrollLeft > 0 ? 'flex' : 'none';
+        rightButton.style.display =
+            booksRow.scrollLeft < (booksRow.scrollWidth - booksRow.clientWidth) ? 'flex' : 'none';
+    };
+
+    booksRow.addEventListener('scroll', updateScrollButtons);
+    updateScrollButtons();
+}
+
+function showBookDetails(book) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+
+    const addToCartButton = !hasRole('admin') && book.inventory > 0
+        ? `<button class="addToCartBtn" data-id="${book.id}">Add to Cart</button>`
+        : book.inventory === 0 ? '<button disabled>Out of Stock</button>' : '';
+
+    const adminButtons = hasRole('admin')
+        ? `
+            <button class="editBookBtn" data-id="${book.id}">Edit</button>
+            <button class="deleteBookBtn" data-id="${book.id}">Delete</button>
+          `
+        : '';
+
+    const imageUrl = book.imageName ? `/api/books/image/${book.imageName}` : '/api/placeholder/200/300';
+
+    modal.innerHTML = `
+        <div class="modal-content book-details-modal">
+            <span class="close">&times;</span>
+            <div class="book-details">
+                <div class="book-image-container">
+                    <img src="${imageUrl}" 
+                         alt="${book.title}"
+                         onload="this.style.opacity='1'"
+                         onerror="this.src='/api/placeholder/200/300'">
+                </div>
+                <div class="book-info">
+                    <h2>${book.title}</h2>
+                    <p><strong>Author:</strong> ${book.author || 'Unknown Author'}</p>
+                    <p><strong>ISBN:</strong> ${book.isbn || 'ISBN not available'}</p>
+                    <p class="book-description"><strong>Description:</strong> ${book.description || 'No description available'}</p>
+                    <p><strong>Price:</strong> $${book.price ? book.price.toFixed(2) : 'N/A'}</p>
+                    <p><strong>Inventory:</strong> ${book.inventory > 0 ? `In Stock: ${book.inventory}` : 'Out of Stock'}</p>
+                    <div class="book-buttons">
+                        ${addToCartButton}
+                        ${adminButtons}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add fade-in effect for image
+    const style = document.createElement('style');
+    style.textContent = `
+        .book-image-container img {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+    `;
+    document.head.appendChild(style);
+
+    document.body.appendChild(modal);
+    modal.style.display = 'block';
+
+    // Close button functionality
+    const closeBtn = modal.querySelector('.close');
+    closeBtn.onclick = () => {
+        modal.remove();
+        // Remove the dynamic style when modal is closed
+        style.remove();
+    };
+
+    // Click outside to close
+    window.onclick = (event) => {
+        if (event.target === modal) {
+            modal.remove();
+            // Remove the dynamic style when modal is closed
+            style.remove();
+        }
+    };
+
+    // Handle escape key press
+    const handleEscapeKey = (event) => {
+        if (event.key === 'Escape') {
+            modal.remove();
+            style.remove();
+            document.removeEventListener('keydown', handleEscapeKey);
+        }
+    };
+    document.addEventListener('keydown', handleEscapeKey);
+
+    // Add event listeners for buttons in the modal
     if (!hasRole('admin')) {
-        document.querySelectorAll('.addToCartBtn').forEach(button => {
-            button.addEventListener('click', addToCart);
+        modal.querySelectorAll('.addToCartBtn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent modal from closing
+                addToCart(e);
+            });
         });
     }
 
     if (hasRole('admin')) {
-        document.querySelectorAll('.editBookBtn').forEach(button => {
-            button.addEventListener('click', editBook);
+        modal.querySelectorAll('.editBookBtn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent modal from closing
+                editBook(e);
+                modal.remove(); // Close modal after clicking edit
+                style.remove();
+            });
         });
-        document.querySelectorAll('.deleteBookBtn').forEach(button => {
-            button.addEventListener('click', deleteBook);
+        modal.querySelectorAll('.deleteBookBtn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent modal from closing
+                if (confirm('Are you sure you want to delete this book?')) {
+                    deleteBook(e);
+                    modal.remove(); // Close modal after confirming delete
+                    style.remove();
+                }
+            });
         });
     }
 }
@@ -715,8 +850,9 @@ function showAddBookForm() {
                     <input type="text" name="publisher">
                 </div>
                 <div class="form-group">
-                    <label>Picture URL</label>
-                    <input type="text" name="pictureURL">
+                    <label>Image Name</label>
+                    <input type="text" name="imageName" placeholder="e.g., harrypotter.png">
+                    <small class="form-text">Enter the name of the image file located in the bookImages folder</small>
                 </div>
                 <div class="form-group">
                     <label>Price</label>
@@ -726,7 +862,10 @@ function showAddBookForm() {
                     <label>Inventory</label>
                     <input type="number" name="inventory" required>
                 </div>
-                <button type="submit">Add Book</button>
+                <div class="form-buttons">
+                    <button type="submit">Add Book</button>
+                    <button type="button" onclick="showHome()">Cancel</button>
+                </div>
             </form>
         </div>
     `;
@@ -824,8 +963,10 @@ function editBook(event) {
                             <input type="text" name="publisher" value="${book.publisher || ''}">
                         </div>
                         <div class="form-group">
-                            <label>Picture URL</label>
-                            <input type="text" name="pictureURL" value="${book.pictureURL || ''}">
+                            <label>Image Name</label>
+                            <input type="text" name="imageName" value="${book.imageName || ''}" 
+                                   placeholder="e.g., harrypotter.png">
+                            <small class="form-text">Enter the name of the image file located in the bookImages folder</small>
                         </div>
                         <div class="form-group">
                             <label>Price</label>
@@ -835,7 +976,10 @@ function editBook(event) {
                             <label>Inventory</label>
                             <input type="number" name="inventory" value="${book.inventory}" required>
                         </div>
-                        <button type="submit">Update Book</button>
+                        <div class="form-buttons">
+                            <button type="submit">Update Book</button>
+                            <button type="button" onclick="showHome()">Cancel</button>
+                        </div>
                     </form>
                 </div>
             `;
@@ -1013,8 +1157,18 @@ function viewCart() {
     }
 
     const cartContainer = document.createElement('div');
-    cartContainer.className = 'cart-container';
-    content.appendChild(cartContainer);
+    cartContainer.className = 'bookshelf-container';
+
+    const booksRow = document.createElement('div');
+    booksRow.className = 'books-row';
+
+    const leftButton = document.createElement('button');
+    leftButton.className = 'scroll-btn scroll-left';
+    leftButton.innerHTML = '<i class="fas fa-angle-left"></i>';
+
+    const rightButton = document.createElement('button');
+    rightButton.className = 'scroll-btn scroll-right';
+    rightButton.innerHTML = '<i class="fas fa-angle-right"></i>';
 
     let totalCost = 0;
 
@@ -1025,40 +1179,97 @@ function viewCart() {
     ))
         .then(bookItems => {
             bookItems.forEach(({ book, quantity, bookId }) => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'cart-item';
                 const itemTotal = book.price * quantity;
                 totalCost += itemTotal;
 
-                itemDiv.innerHTML = `
-                <div class="cart-item-details" data-cart-item="${bookId}">
-                    <h3>${book.title}</h3>
-                    <p><strong>Author:</strong> ${book.author || 'Unknown Author'}</p>
-                    <p><strong>Price:</strong> $${book.price.toFixed(2)}</p>
-                    <div class="quantity-controls">
-                        <button class="quantity-btn minus-btn" onclick="updateCartItemQuantity('${bookId}', ${quantity - 1})">-</button>
-                        <span class="quantity">${quantity}</span>
-                        <button class="quantity-btn plus-btn" onclick="updateCartItemQuantity('${bookId}', ${quantity + 1})">+</button>
-                    </div>
-                    <p><strong>Total:</strong> <span class="item-total">$${itemTotal.toFixed(2)}</span></p>
-                    <button class="remove-item" onclick="removeFromCart('${bookId}')">Remove</button>
-                </div>
-            `;
+                const bookDiv = document.createElement('div');
+                bookDiv.className = 'book';
+                bookDiv.setAttribute('data-book-id', bookId);
 
-                cartContainer.appendChild(itemDiv);
+                const author = book.author || 'Unknown Author';
+                const imageUrl = book.imageName ? `/api/books/image/${book.imageName}` : '/api/placeholder/200/300';
+
+                bookDiv.innerHTML = `
+                    <div class="book-content">
+                        <div class="book-image">
+                            <img src="${imageUrl}" alt="${book.title}" loading="lazy">
+                        </div>
+                        <h2>${book.title}</h2>
+                        <p class="author">${author}</p>
+                        <div class="cart-item-controls">
+                            <div class="quantity-controls">
+                                <button class="quantity-btn minus-btn">-</button>
+                                <span class="quantity">${quantity}</span>
+                                <button class="quantity-btn plus-btn">+</button>
+                            </div>
+                            <p class="item-total">$${itemTotal.toFixed(2)}</p>
+                            <button class="remove-item">Remove</button>
+                        </div>
+                    </div>
+                `;
+
+                // Add quantity control event listeners
+                const minusBtn = bookDiv.querySelector('.minus-btn');
+                const plusBtn = bookDiv.querySelector('.plus-btn');
+                const removeBtn = bookDiv.querySelector('.remove-item');
+
+                minusBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const currentQuantity = cart.find(item => item.bookId === bookId)?.quantity || 0;
+                    updateCartItemQuantity(bookId, currentQuantity - 1, book.inventory);
+                });
+
+                plusBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const currentQuantity = cart.find(item => item.bookId === bookId)?.quantity || 0;
+                    updateCartItemQuantity(bookId, currentQuantity + 1, book.inventory);
+                });
+
+                removeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    removeFromCart(bookId);
+                });
+
+                booksRow.appendChild(bookDiv);
             });
 
+            cartContainer.appendChild(leftButton);
+            cartContainer.appendChild(booksRow);
+            cartContainer.appendChild(rightButton);
+            content.appendChild(cartContainer);
+
+            // Scroll button functionality
+            leftButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                booksRow.scrollBy({ left: -300, behavior: 'smooth' });
+            });
+
+            rightButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                booksRow.scrollBy({ left: 300, behavior: 'smooth' });
+            });
+
+            const updateScrollButtons = () => {
+                leftButton.style.display = booksRow.scrollLeft > 0 ? 'flex' : 'none';
+                rightButton.style.display =
+                    booksRow.scrollLeft < (booksRow.scrollWidth - booksRow.clientWidth) ? 'flex' : 'none';
+            };
+
+            booksRow.addEventListener('scroll', updateScrollButtons);
+            updateScrollButtons();
+
+            // Add checkout section
             const checkoutSection = document.createElement('div');
             checkoutSection.className = 'checkout-section';
             checkoutSection.innerHTML = `
-            <div class="cart-summary">
-                <h3>Order Summary</h3>
-                <p><strong>Total Items: ${cart.reduce((total, item) => total + item.quantity, 0)}</strong></p>
-                <p><strong>Total Cost: $${totalCost.toFixed(2)}</strong></p>
-                <button id="checkoutBtn" class="checkout-btn">Proceed to Checkout</button>
-                <button onclick="showHome()" class="continue-shopping">Continue Shopping</button>
-            </div>
-        `;
+                <div class="cart-summary">
+                    <h3>Order Summary</h3>
+                    <p><strong>Total Items: ${cart.reduce((total, item) => total + item.quantity, 0)}</strong></p>
+                    <p><strong>Total Cost: $${totalCost.toFixed(2)}</strong></p>
+                    <button id="checkoutBtn" class="checkout-btn">Proceed to Checkout</button>
+                    <button onclick="showHome()" class="continue-shopping">Continue Shopping</button>
+                </div>
+            `;
             content.appendChild(checkoutSection);
 
             document.getElementById('checkoutBtn').addEventListener('click', checkout);
@@ -1071,58 +1282,49 @@ function viewCart() {
  * @param {string} bookId - The ID of the book.
  * @param {number} newQuantity - The new quantity to set.
  */
-function updateCartItemQuantity(bookId, newQuantity) {
+function updateCartItemQuantity(bookId, newQuantity, maxInventory) {
+    // Don't allow negative quantities
     if (newQuantity <= 0) {
         removeFromCart(bookId);
         return;
     }
 
-    fetch(`${apiUrl}/books/${bookId}`)
-        .then(response => response.json())
-        .then(book => {
-            if (newQuantity > book.inventory) {
-                alert('Cannot add more items than available in inventory.');
-                return;
-            }
+    // Check inventory limit
+    if (newQuantity > maxInventory) {
+        alert(`Cannot add more than ${maxInventory} items (current stock limit)`);
+        return;
+    }
 
-            const cartItem = cart.find(item => item.bookId === bookId);
-            if (cartItem) {
-                cartItem.quantity = newQuantity;
-                updateCartCount();
+    // Find current cart item
+    const cartItem = cart.find(item => item.bookId === bookId);
+    if (!cartItem) return;
 
-                // Find the cart item container
-                const itemContainer = document.querySelector(`div[data-cart-item="${bookId}"]`);
-                if (itemContainer) {
-                    // Update quantity
-                    const quantitySpan = itemContainer.querySelector('.quantity');
-                    if (quantitySpan) {
-                        quantitySpan.textContent = newQuantity;
-                    }
+    // Update cart state
+    cartItem.quantity = newQuantity;
 
-                    // Update item total
-                    const itemTotal = book.price * newQuantity;
-                    const totalSpan = itemContainer.querySelector('.item-total');
-                    if (totalSpan) {
-                        totalSpan.textContent = `$${itemTotal.toFixed(2)}`;
-                    }
+    // Update UI
+    const itemContainer = document.querySelector(`div[data-book-id="${bookId}"]`);
+    if (itemContainer) {
+        const quantitySpan = itemContainer.querySelector('.quantity');
+        const itemTotalSpan = itemContainer.querySelector('.item-total');
 
-                    // Update quantity buttons
-                    const minusBtn = itemContainer.querySelector('.minus-btn');
-                    const plusBtn = itemContainer.querySelector('.plus-btn');
-                    if (minusBtn && plusBtn) {
-                        minusBtn.onclick = () => updateCartItemQuantity(bookId, newQuantity - 1);
-                        plusBtn.onclick = () => updateCartItemQuantity(bookId, newQuantity + 1);
-                    }
+        if (quantitySpan) {
+            quantitySpan.textContent = newQuantity;
+        }
 
-                    // Update cart summary
-                    updateCartSummary();
+        // Update item total price
+        fetch(`${apiUrl}/books/${bookId}`)
+            .then(response => response.json())
+            .then(book => {
+                const itemTotal = book.price * newQuantity;
+                if (itemTotalSpan) {
+                    itemTotalSpan.textContent = `$${itemTotal.toFixed(2)}`;
                 }
-            }
-        })
-        .catch(error => {
-            console.error('Error updating quantity:', error);
-            alert('An error occurred while updating the quantity.');
-        });
+                updateCartSummary();
+            });
+    }
+
+    updateCartCount();
 }
 
 function updateCartSummary() {
@@ -1157,9 +1359,36 @@ function updateCartSummary() {
  * @param {string} bookId - The ID of the book to remove.
  */
 function removeFromCart(bookId) {
-    cart = cart.filter(item => item.bookId !== bookId);
+    // Find the item in cart
+    const itemIndex = cart.findIndex(item => item.bookId === bookId);
+    if (itemIndex === -1) return;
+
+    // Remove item from cart array
+    cart.splice(itemIndex, 1);
+
+    // Find and remove the DOM element
+    const bookElement = document.querySelector(`div[data-book-id="${bookId}"]`);
+    if (bookElement) {
+        bookElement.remove();
+    }
+
+    // Update cart count
     updateCartCount();
-    viewCart();
+
+    // If cart is empty, show empty cart message
+    if (cart.length === 0) {
+        const content = document.getElementById('content');
+        content.innerHTML = `
+            <h2>Your Shopping Cart</h2>
+            <div class="empty-cart">
+                <p>Your cart is empty.</p>
+                <button onclick="showHome()">Continue Shopping</button>
+            </div>
+        `;
+    } else {
+        // Update the cart summary if items remain
+        updateCartSummary();
+    }
 }
 
 /**
@@ -1242,20 +1471,28 @@ function showCheckoutSuccess() {
  */
 function viewPurchaseHistory() {
     const content = document.getElementById('content');
-    content.innerHTML = '<h2>Purchase History</h2>';
+    content.innerHTML = `
+        <div class="purchase-history-container">
+            <h2>Purchase History</h2>
+            <div id="purchaseRecords">
+                <div class="loading">Loading purchase history...</div>
+            </div>
+        </div>
+    `;
 
     const token = getAuthToken();
     if (!token) {
-        content.innerHTML += `
-            <div class="empty-history">
-                <p>Please log in to view your purchase history.</p>
-                <button onclick="showHome()">Return to Home</button>
+        content.innerHTML = `
+            <div class="purchase-history-container">
+                <h2>Purchase History</h2>
+                <div class="empty-history">
+                    <p>Please log in to view your purchase history.</p>
+                    <button onclick="showHome()">Return to Home</button>
+                </div>
             </div>
         `;
         return;
     }
-
-    content.innerHTML += '<div class="loading-spinner">Loading purchase history...</div>';
 
     fetch(`${apiUrl}/purchase/history`, {
         headers: {
@@ -1271,29 +1508,24 @@ function viewPurchaseHistory() {
             return response.json();
         })
         .then(purchases => {
-            content.innerHTML = '<h2>Purchase History</h2>';
+            const purchaseRecords = document.getElementById('purchaseRecords');
 
             if (!purchases || purchases.length === 0) {
-                content.innerHTML += `
-                <div class="empty-history">
-                    <p>No purchase history found.</p>
-                    <button onclick="showHome()">Start Shopping</button>
-                </div>
-            `;
+                purchaseRecords.innerHTML = `
+                    <div class="empty-history">
+                        <p>No purchase history found.</p>
+                        <button onclick="showHome()">Start Shopping</button>
+                    </div>
+                `;
                 return;
             }
 
-            const historyContainer = document.createElement('div');
-            historyContainer.className = 'purchase-history-container';
-
+            // Sort purchases by date (newest first)
             const sortedPurchases = purchases.sort((a, b) =>
                 new Date(b.purchaseDate) - new Date(a.purchaseDate)
             );
 
-            sortedPurchases.forEach(purchase => {
-                const purchaseDiv = document.createElement('div');
-                purchaseDiv.className = 'purchase-record';
-
+            purchaseRecords.innerHTML = sortedPurchases.map(purchase => {
                 let totalItems = 0;
                 let totalCost = 0;
 
@@ -1301,48 +1533,86 @@ function viewPurchaseHistory() {
                     const quantity = item.quantity || 0;
                     const price = item.purchasePrice || 0;
                     const itemTotal = price * quantity;
-
                     totalItems += quantity;
                     totalCost += itemTotal;
 
+                    // Create a unique ID for this specific purchase item
+                    const uniqueImageId = `book-img-${purchase.id}-${item.bookId}`;
+
+                    // Get the book image URL
+                    if (item.bookId) {
+                        fetch(`${apiUrl}/books/${item.bookId}`)
+                            .then(response => response.json())
+                            .then(book => {
+                                const imgElement = document.getElementById(uniqueImageId);
+                                if (imgElement) {
+                                    imgElement.src = book.imageName ? `/api/books/image/${book.imageName}` : '/api/placeholder/80/120';
+                                }
+                            })
+                            .catch(() => {
+                                console.log('Failed to fetch book image');
+                            });
+                    }
+
                     return `
-                    <div class="purchase-item">
-                        <h4>${item.title}</h4>
-                        <p><strong>Author:</strong> ${item.author}</p>
-                        <p><strong>ISBN:</strong> ${item.isbn}</p>
-                        <p><strong>Quantity:</strong> ${quantity}</p>
-                        <p><strong>Price:</strong> $${price.toFixed(2)}</p>
-                        <p><strong>Total:</strong> $${itemTotal.toFixed(2)}</p>
-                    </div>
-                `;
+                        <div class="purchase-item">
+                            <div class="purchase-item-image">
+                                <img id="${uniqueImageId}" 
+                                     src="/api/placeholder/80/120" 
+                                     alt="${item.title}"
+                                     loading="lazy">
+                            </div>
+                            <div class="purchase-item-details">
+                                <h3 class="purchase-item-title">${item.title}</h3>
+                                <p class="purchase-item-author">by ${item.author}</p>
+                                <p class="purchase-item-isbn">ISBN: ${item.isbn}</p>
+                            </div>
+                            <div class="purchase-item-price">
+                                <div class="price-details">
+                                    <p>Quantity: ${quantity}</p>
+                                    <p>Price: $${price.toFixed(2)}</p>
+                                </div>
+                                <p class="total-price">Total: $${itemTotal.toFixed(2)}</p>
+                            </div>
+                        </div>
+                    `;
                 }).join('');
 
-                purchaseDiv.innerHTML = `
-                <div class="purchase-header">
-                    <h3>Purchase Date: ${new Date(purchase.purchaseDate).toLocaleString()}</h3>
-                    <div class="purchase-summary">
-                        <p><strong>Total Items:</strong> ${totalItems}</p>
-                        <p><strong>Total Cost:</strong> $${totalCost.toFixed(2)}</p>
+                return `
+                    <div class="purchase-record">
+                        <div class="purchase-header">
+                            <div class="purchase-date">
+                                ${new Date(purchase.purchaseDate).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })}
+                            </div>
+                            <div class="purchase-summary">
+                                <p>Items: ${totalItems}</p>
+                                <p>Total: $${totalCost.toFixed(2)}</p>
+                            </div>
+                        </div>
+                        <div class="purchase-items">
+                            ${itemsList}
+                        </div>
                     </div>
-                </div>
-                <div class="purchase-items">
-                    ${itemsList}
-                </div>
-            `;
-
-                historyContainer.appendChild(purchaseDiv);
-            });
-
-            content.appendChild(historyContainer);
+                `;
+            }).join('');
         })
         .catch(error => {
             console.error('Error fetching purchase history:', error);
             content.innerHTML = `
-            <h2>Purchase History</h2>
-            <div class="error-message">
-                <p>${error.message || 'An error occurred while loading purchase history.'}</p>
-                <button onclick="showHome()">Return to Home</button>
-            </div>
-        `;
+                <div class="purchase-history-container">
+                    <h2>Purchase History</h2>
+                    <div class="error-message">
+                        <p>${error.message || 'An error occurred while loading purchase history.'}</p>
+                        <button onclick="showHome()">Return to Home</button>
+                    </div>
+                </div>
+            `;
         });
 }

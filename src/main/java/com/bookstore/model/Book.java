@@ -17,7 +17,7 @@ public class Book {
     private String description;
     private String author;
     private String publisher;
-    private String pictureURL;
+    private String imageName;
     private double price;
     private int inventory; // Available stock
 
@@ -30,18 +30,18 @@ public class Book {
      * @param description - a brief description of the book
      * @param author - the author of the book
      * @param publisher - the publisher of the book
-     * @param pictureURL - the URL of the book's cover picture
+     * @param imageName - the URL of the book's cover picture
      * @param price - the price of the book
      * @param inventory - the number of copies available in stock
      */
     public Book(String isbn, String title, String description, String author,
-                String publisher, String pictureURL, Double price, Integer inventory) {
+                String publisher, String imageName, Double price, Integer inventory) {
         this.isbn = isbn;
         this.title = title;
         this.description = description;
         this.author = author;
         this.publisher = publisher;
-        this.pictureURL = pictureURL;
+        this.imageName = imageName;
         setPrice(price);
         setInventory(inventory);
     }
@@ -131,16 +131,16 @@ public class Book {
      * Gets the URL of the book's cover picture.
      * @return the picture URL of the book
      */
-    public String getPictureURL() {
-        return pictureURL;
+    public String getImageName() {
+        return imageName;
     }
 
     /**
      * Sets the URL of the book's cover picture.
-     * @param pictureURL the new picture URL of the book
+     * @param imageName the new picture URL of the book
      */
-    public void setPictureURL(String pictureURL) {
-        this.pictureURL = pictureURL;
+    public void setImageName(String imageName) {
+        this.imageName = imageName;
     }
 
     /**

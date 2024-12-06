@@ -74,13 +74,13 @@ public class BookTest {
 
     @Test
     public void getPictureURL() {
-        assertEquals("http://example.com/picture.jpg", book.getPictureURL());
+        assertEquals("http://example.com/picture.jpg", book.getImageName());
     }
 
     @Test
     public void setPictureURL() {
-        book.setPictureURL("http://example.com/newpicture.jpg");
-        assertEquals("http://example.com/newpicture.jpg", book.getPictureURL());
+        book.setImageName("http://example.com/newpicture.jpg");
+        assertEquals("http://example.com/newpicture.jpg", book.getImageName());
     }
 
     @Test

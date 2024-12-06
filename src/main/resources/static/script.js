@@ -456,12 +456,7 @@ function showRecommendedBooks() {
     }
 
     const content = document.getElementById('content');
-    content.innerHTML = `
-        <div class="purchase-history-container">
-            <h2>Recommended Books for You</h2>
-            <div id="recommendationsContent" class="loading">Loading recommendations...</div>
-        </div>
-    `;
+    content.innerHTML = '<div class="loading">Loading recommendations...</div>';
 
     fetch(`${apiUrl}/books/recommended`, {
         headers: {
@@ -475,108 +470,58 @@ function showRecommendedBooks() {
             return response.json();
         })
         .then(books => {
-            const recommendationsContent = document.getElementById('recommendationsContent');
+            content.innerHTML = '<h2>Recommended Books for You</h2>';
 
             if (!books || books.length === 0) {
-                recommendationsContent.innerHTML = `
-                    <div class="empty-recommendations">
-                        <p>No recommendations available yet. Try purchasing more books to get personalized recommendations!</p>
-                        <button onclick="showHome()" class="return-home">Browse Books</button>
-                    </div>
-                `;
+                content.innerHTML += `
+                <div class="no-recommendations">
+                    <p>No recommendations available yet. Try purchasing more books to get personalized recommendations!</p>
+                    <button onclick="showHome()" class="return-home">Browse Books</button>
+                </div>
+            `;
                 return;
             }
 
-            // Create bookshelf container for recommendations
-            recommendationsContent.innerHTML = `
-                <div class="bookshelf-container">
-                    <button class="scroll-btn scroll-left">
-                        <i class="fas fa-angle-left"></i>
-                    </button>
-                    <div class="books-row"></div>
-                    <button class="scroll-btn scroll-right">
-                        <i class="fas fa-angle-right"></i>
-                    </button>
-                </div>
-            `;
-
-            const booksRow = recommendationsContent.querySelector('.books-row');
+            const booksContainer = document.createElement('div');
+            booksContainer.className = 'books-container';
 
             books.forEach(book => {
                 const bookDiv = document.createElement('div');
                 bookDiv.className = 'book';
-                bookDiv.setAttribute('data-book-id', book.id);
 
                 const author = book.author || 'Unknown Author';
-                const imageUrl = book.imageName ? `/api/books/image/${book.imageName}` : '/api/placeholder/200/300';
+                const price = book.price !== undefined ? `$${book.price.toFixed(2)}` : 'Price not available';
+                const inventoryText = book.inventory > 0 ? `In Stock: ${book.inventory}` : 'Out of Stock';
 
                 bookDiv.innerHTML = `
-                    <div class="book-content">
-                        <div class="book-image">
-                            <img src="${imageUrl}" alt="${book.title}" loading="lazy">
-                        </div>
-                        <h2>${book.title}</h2>
-                        <p class="author">${author}</p>
-                        <div class="book-price">$${book.price ? book.price.toFixed(2) : 'N/A'}</div>
-                        ${book.inventory > 0 ? `
-                            <button class="addToCartBtn" onclick="event.stopPropagation();" data-id="${book.id}">
-                                Add to Cart
-                            </button>
-                        ` : '<button disabled>Out of Stock</button>'}
-                    </div>
-                `;
+                <h2>${book.title}</h2>
+                <p><strong>Author:</strong> ${author}</p>
+                <p>${book.description || 'No description available'}</p>
+                <p><strong>Price:</strong> ${price}</p>
+                <p><strong>Stock:</strong> ${inventoryText}</p>
+                ${book.inventory > 0 ?
+                    `<button class="addToCartBtn" data-id="${book.id}">Add to Cart</button>` :
+                    '<button disabled>Out of Stock</button>'}
+            `;
 
-                // Add click event to show full book details
-                bookDiv.addEventListener('click', () => showBookDetails(book));
-
-                // Add click event for add to cart button
-                const addToCartBtn = bookDiv.querySelector('.addToCartBtn');
-                if (addToCartBtn) {
-                    addToCartBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        addToCart(e);
-                    });
-                }
-
-                booksRow.appendChild(bookDiv);
+                booksContainer.appendChild(bookDiv);
             });
 
-            // Add scroll button functionality
-            const booksContainer = recommendationsContent.querySelector('.bookshelf-container');
-            const leftButton = booksContainer.querySelector('.scroll-left');
-            const rightButton = booksContainer.querySelector('.scroll-right');
+            content.appendChild(booksContainer);
 
-            leftButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                booksRow.scrollBy({ left: -300, behavior: 'smooth' });
+            document.querySelectorAll('.addToCartBtn').forEach(button => {
+                button.addEventListener('click', addToCart);
             });
-
-            rightButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                booksRow.scrollBy({ left: 300, behavior: 'smooth' });
-            });
-
-            // Update scroll button visibility
-            const updateScrollButtons = () => {
-                leftButton.style.display = booksRow.scrollLeft > 0 ? 'flex' : 'none';
-                rightButton.style.display =
-                    booksRow.scrollLeft < (booksRow.scrollWidth - booksRow.clientWidth) ? 'flex' : 'none';
-            };
-
-            booksRow.addEventListener('scroll', updateScrollButtons);
-            updateScrollButtons();
         })
         .catch(error => {
             console.error('Error fetching recommendations:', error);
             content.innerHTML = `
-                <div class="purchase-history-container">
-                    <h2>Recommended Books</h2>
-                    <div class="error-message">
-                        <p>Sorry, we couldn't load your recommendations. Please try again later.</p>
-                        <button onclick="showHome()" class="return-home">Return to Home</button>
-                    </div>
-                </div>
-            `;
+            <div class="error-message">
+                <h2>Recommended Books</h2>
+                <p>Sorry, we couldn't load your recommendations. Please try again later.</p>
+                <button onclick="showHome()" class="return-home">Return to Home</button>
+            </div>
+        `;
         });
 }
 

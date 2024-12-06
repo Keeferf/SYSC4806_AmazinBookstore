@@ -62,7 +62,7 @@ public class BookController {
     @GetMapping("/image/{imageName}")
     public ResponseEntity<Resource> getBookImage(@PathVariable String imageName) {
         try {
-            Path imagePath = Paths.get("./src/main/resources/static/bookImages/" + imageName);
+            Path imagePath = Paths.get("src/main/resources/static/bookImages/" + imageName);
             Resource resource = new FileSystemResource(imagePath);
 
             if (resource.exists()) {

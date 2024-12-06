@@ -43,29 +43,35 @@ public class BookStoreApplication {
     }
 
     /**
-     * Connects to the MongoDB
-     */
-    public static void MongoConnection() {
-        String connectionString = "mongodb+srv://DBAccess:SYSC4806pass@cluster0.ag8xa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-
-        ServerApi serverApi = ServerApi.builder()
-                .version(ServerApiVersion.V1)
-                .build();
-
-        MongoClientSettings settings = MongoClientSettings.builder()
-                .applyConnectionString(new ConnectionString(connectionString))
-                .serverApi(serverApi)
-                .build();
-
-        try (MongoClient mongoClient = MongoClients.create(settings)) {
-            MongoDatabase database = mongoClient.getDatabase("bookstoreDB");
-            database.runCommand(new Document("ping", 1));
-            log.info("Pinged your deployment. Successfully connected to MongoDB!");
-        } catch (MongoException e) {
-            log.error("Failed to connect to MongoDB: {}", e.getMessage());
-            e.printStackTrace();
-        }
+ * Connects to the MongoDB
+ */
+public static void MongoConnection() {
+    // Fetch the connection string from the environment variable
+    String connectionString = System.getenv("MONGODB_URI");
+    
+    if (connectionString == null || connectionString.isEmpty()) {
+        throw new IllegalStateException("MONGODB_URI environment variable is not set.");
     }
+
+    ServerApi serverApi = ServerApi.builder()
+            .version(ServerApiVersion.V1)
+            .build();
+
+    MongoClientSettings settings = MongoClientSettings.builder()
+            .applyConnectionString(new ConnectionString(connectionString))
+            .serverApi(serverApi)
+            .build();
+
+    try (MongoClient mongoClient = MongoClients.create(settings)) {
+        MongoDatabase database = mongoClient.getDatabase("bookstoreDB");
+        database.runCommand(new Document("ping", 1));
+        log.info("Pinged your deployment. Successfully connected to MongoDB!");
+    } catch (MongoException e) {
+        log.error("Failed to connect to MongoDB: {}", e.getMessage());
+        e.printStackTrace();
+    }
+}
+
 
     /**
      * Initializes the default users (customer and admin) in the database.
